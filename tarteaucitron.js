@@ -484,6 +484,38 @@ var tarteaucitron = {
                     return 0;
                 });
 
+                // get template
+                fetch('tarteaucitron.template.html')
+                    .then(res => res.text())
+                    .then((responseText) => {
+
+                        document.head.append(
+                            new DOMParser().parseFromString(responseText, 'text/html')
+                                .querySelector('template')
+                        );
+
+                        const myTemplate = document.getElementById('tarteaucitronRootContainer');
+                        const tarteaucitronTemplate = document.importNode(myTemplate.content, true);
+                        const tarteaucitronTemplate2 = document.importNode(myTemplate.content, true);
+
+                        // Modify the cloned content
+                        var h1 = tarteaucitronTemplate.querySelector('#tac_title');
+                        h1.textContent = tarteaucitron.lang.title;
+
+                        console.log(tarteaucitronTemplate);
+
+                        document.body.appendChild(tarteaucitronTemplate);
+
+                        console.log(tarteaucitronTemplate2);
+
+                        var h12 = tarteaucitronTemplate2.querySelector('#tac_title');
+                        console.log(h12);
+
+                        h12.textContent = tarteaucitron.lang.title + 'yeah';
+
+                        document.body.appendChild(tarteaucitronTemplate2);
+                    });
+
                 // Step 3: prepare the html
                 html += '<div role="heading" aria-level="1" id="tac_title" class="tac_visually-hidden">' + tarteaucitron.lang.title + '</div>';
                 html += '<div id="tarteaucitronPremium"></div>';
