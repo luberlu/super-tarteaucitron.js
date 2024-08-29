@@ -34,6 +34,8 @@ var tarteaucitron = {
         "init": function () {},
         "load": function () {},
     },
+    // première function pour initialiser le plugin
+    /** params : paramètres à passer à l'initialisation du plugin */
     "init": function (params) {
         "use strict";
         var origOpen;
@@ -42,24 +44,35 @@ var tarteaucitron = {
         if (alreadyLaunch === 0) {
             alreadyLaunch = 1;
 
-            // add listeners
+            // ajout des listeners
+
+            // après chargement de la page, 
             window.addEventListener("load", function () {
+
+                // lancement de la fonction loadEvent, qui load le plugin.
                 tarteaucitron.initEvents.loadEvent(false);
+
             }, false);
 
+            // listener pour le scroll
             window.addEventListener("scroll", function () {
                 tarteaucitron.initEvents.scrollEvent();
             }, false);
 
+            // listener pour les touches du clavier
             window.addEventListener("keydown", function (evt) {
-                tarteaucitron.initEvents.keydownEvent(false, evt);
+                tarteaucitron.initEvents.keydownEvent(evt);
             }, false);
 
+            // listener pour le changement du hash
             window.addEventListener("hashchange", function () {
                 tarteaucitron.initEvents.hashchangeEvent();
             }, false);
 
+            // listener pour le resize de la fenêtre du navigateur
             window.addEventListener("resize", function () {
+
+                // on lance le resizeEvent
                 tarteaucitron.initEvents.resizeEvent();
             }, false);
             //
@@ -98,44 +111,34 @@ var tarteaucitron = {
         }
     },
     "initEvents": {
-        "loadEvent": function (isOldBrowser) {
+        // Fonction qui load le plugin
+        "loadEvent": function () {
+
+            // Chargement complet du plugin
             tarteaucitron.load();
+
+            // Ajout d'un listener si l'élement contient la classe "tarteaucitronOpenPanel"
             tarteaucitron.fallback(['tarteaucitronOpenPanel'], function (elem) {
-                if (isOldBrowser) {
-                    elem.attachEvent("onclick", function (event) {
-                        tarteaucitron.userInterface.openPanel();
-                        event.preventDefault();
-                    });
-                } else {
-                    elem.addEventListener("click", function (event) {
-                        tarteaucitron.userInterface.openPanel();
-                        event.preventDefault();
-                    }, false);
-                }
+                elem.addEventListener("click", function (event) {
+
+                    // Ouverture du panel
+                    tarteaucitron.userInterface.openPanel();
+                    event.preventDefault();
+                }, false);
             }, true);
         },
-        "keydownEvent": function (isOldBrowser, evt) {
+        // fonction pour les evenements claviers
+        "keydownEvent": function (evt) {
+            // A l'appui d'escape, fermeture du panel
             if (evt.keyCode === 27) {
                 tarteaucitron.userInterface.closePanel();
             }
-
-            if (isOldBrowser) {
-                if ( evt.keyCode === 9 && focusableEls.indexOf(evt.target) >= 0) {
-                    if ( evt.shiftKey ) /* shift + tab */ {
-                        if (document.activeElement === firstFocusableEl) {
-                            lastFocusableEl.focus();
-                            evt.preventDefault();
-                        }
-                    } else /* tab */ {
-                        if (document.activeElement === lastFocusableEl) {
-                            firstFocusableEl.focus();
-                            evt.preventDefault();
-                        }
-                    }
-                }
-            }
         },
+
+        // fonction pour le changement du hash
         "hashchangeEvent": function () {
+
+            // si l'url comprends le hash #tarteaucitron, on ouvre la fenêtre du plugin
             if (document.location.hash === tarteaucitron.hashtag && tarteaucitron.hashtag !== '') {
                 tarteaucitron.userInterface.openPanel();
             }
@@ -152,28 +155,50 @@ var tarteaucitron = {
                 tarteaucitron.userInterface.jsSizing('cookie');
             }
         },
+        // fonction executée au scroll de la page
         "scrollEvent": function () {
-            var scrollPos = window.pageYOffset || document.documentElement.scrollTop;
+            // renvoie le nombre de pixels que le document a défilé verticalement
+            var scrollPos = document.documentElement.scrollTop;
             var heightPosition;
             var tacPercentage = document.getElementById('tarteaucitronPercentage');
             var tacAlertBig = document.getElementById('tarteaucitronAlertBig');
 
+            // Si highPrivacy est à false et que la fenêtre plugin est active (si pas encore validé quoi), 
+            // on active le consentement au scroll, non valide en UE
             if (tacAlertBig && !tarteaucitron.highPrivacy) {
+
+                // Si la fenetre est visible
                 if (tacAlertBig.style.display === 'block') {
+
+                    // hauteur de l'élément par rapport à la mise en page.
                     heightPosition = tacAlertBig.offsetHeight + 'px';
 
+                    // Si on dépasse deux écrans au scroll
                     if (scrollPos > (screen.height * 2)) {
+
+                        // On accepte tous les cookies
                         tarteaucitron.userInterface.respondAll(true);
+                    
+                    // Sinon on mentionne les utilisateurs que le consentement 
+                    // va être activé au scroll automatiquement, après quelques pixels (> écran/2) 
+                    // en changeant le texte
                     } else if (scrollPos > (screen.height / 2)) {
                         document.getElementById('tarteaucitronDisclaimerAlert').innerHTML = '<strong>' + tarteaucitron.lang.alertBigScroll + '</strong> ' + tarteaucitron.lang.alertBig;
                     }
 
+                    // Si l'élément html pour le scroll percentage est présent
                     if (tacPercentage) {
+
+                        // si la fenêtre est placée en haut de page, on place l'élement 
+                        // après la fenetre plugin
                         if (tarteaucitron.orientation === 'top') {
                             tacPercentage.style.top = heightPosition;
+                        // sinon on le place n'importe comment     
                         } else {
                             tacPercentage.style.bottom = heightPosition;
                         }
+
+                        // pourcentage du scroll
                         tacPercentage.style.width = ((100 / (screen.height * 2)) * scrollPos) + '%';
                     }
                 }
@@ -608,7 +633,9 @@ var tarteaucitron = {
                     modalAttrs = ' role="dialog" aria-modal="true" aria-labelledby="tac_title"';
                 }
 
+                console.log('ici');
                 if (tarteaucitron.parameters.highPrivacy && !tarteaucitron.parameters.AcceptAllCta) {
+                    console.log('ici2');
                     html += '<div tabindex="-1" id="tarteaucitronAlertBig" class="tarteaucitronAlertBig' + orientation + '"' + modalAttrs + '>';
                     //html += '<div class="tarteaucitronAlertBigWrapper">';
                     html += '   <span id="tarteaucitronDisclaimerAlert" role="paragraph">';
