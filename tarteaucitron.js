@@ -40,7 +40,10 @@ var tarteaucitron = {
         "use strict";
         var origOpen;
 
+        // ajouter les paramètres dans l'objet tarteaucitron
         tarteaucitron.parameters = params;
+
+        // n'executer l'initialisation qu'une seule fois
         if (alreadyLaunch === 0) {
             alreadyLaunch = 1;
 
@@ -77,6 +80,8 @@ var tarteaucitron = {
             }, false);
             //
 
+            // pro services, pas utile
+            /*
             if (typeof XMLHttpRequest !== 'undefined') {
                 origOpen = XMLHttpRequest.prototype.open;
                 XMLHttpRequest.prototype.open = function () {
@@ -103,9 +108,10 @@ var tarteaucitron = {
                         origOpen.apply(this, arguments);
                     } catch (err) {}
                 };
-            }
+            }*/
         }
 
+        // si une fonction d'initialisation custom a été ajoutée à l'objet, execution de celle-ci
         if(tarteaucitron.events.init) {
             tarteaucitron.events.init();
         }
@@ -113,7 +119,6 @@ var tarteaucitron = {
     "initEvents": {
         // Fonction qui load le plugin
         "loadEvent": function () {
-
             // Chargement complet du plugin
             tarteaucitron.load();
 
@@ -143,14 +148,21 @@ var tarteaucitron = {
                 tarteaucitron.userInterface.openPanel();
             }
         },
+        // fonction pour le resize de la fenêtre
         "resizeEvent": function () {
+    
+            // div panel config 
             var tacElem = document.getElementById('tarteaucitron');
+
+            // liste des cookies
             var tacCookieContainer = document.getElementById('tarteaucitronCookiesListContainer');
 
+            // ajuster la fenetre en fonction du resize
             if (tacElem && tacElem.style.display === 'block') {
                 tarteaucitron.userInterface.jsSizing('main');
             }
 
+            // ajuster la fenetre cookies en fonction du resize
             if (tacCookieContainer && tacCookieContainer.style.display === 'block') {
                 tarteaucitron.userInterface.jsSizing('cookie');
             }
@@ -208,16 +220,24 @@ var tarteaucitron = {
     "load": function () {
         "use strict";
 
+        // si load déjà executé
         if (tarteaucitronIsLoaded === true) {
             return;
         }
 
+        // initialiser la variable cdn par sa valeur dans window
         var cdn = tarteaucitron.cdn,
+            // trouver le langage
             language = tarteaucitron.getLanguage(),
+
+            // charger les fichiers annexes en fonction de si CDN / minifiés ou pas
             useMinifiedJS = ((cdn.indexOf('cdn.jsdelivr.net') >= 0) || (tarteaucitronPath.indexOf('.min.') >= 0) || (tarteaucitronUseMin !== '')),
             pathToLang = cdn + 'lang/tarteaucitron.' + language + (useMinifiedJS ? '.min' : '') + '.js',
             pathToServices = cdn + 'tarteaucitron.services' + (useMinifiedJS ? '.min' : '') + '.js',
+
+            // création d'un element link
             linkElement = document.createElement('link'),
+            // initialiser les valeurs par défaut du plugin (paramètres)
             defaults = {
                 "adblocker": false,
                 "hashtag": '#tarteaucitron',
@@ -247,24 +267,28 @@ var tarteaucitron = {
                 "partnersList": false,
                 "alwaysNeedConsent": false
             },
+            // récupérer les paramètres envoyés
             params = tarteaucitron.parameters;
 
-        // flag the tac load
+        // flag the tac load (déclarer le plugin loadé)
         tarteaucitronIsLoaded = true;
 
-        // Don't show the middle bar if we are on the privacy policy or more page
+        // Ne pas afficher la popup au milieu si on est sur la page privacy policy ou la page pour en savoir plus
         if (((tarteaucitron.parameters.readmoreLink !== undefined && window.location.href == tarteaucitron.parameters.readmoreLink) || window.location.href == tarteaucitron.parameters.privacyUrl) && tarteaucitron.parameters.orientation == "middle") {
+            // par défaut en bas
             tarteaucitron.parameters.orientation = "bottom";
         }
 
-        // Step -1
-        if (typeof tarteaucitronCustomPremium !== 'undefined') {
+        // Actionner le premium, pas utile
+        /* if (typeof tarteaucitronCustomPremium !== 'undefined') {
             tarteaucitronCustomPremium();
-        }
+        }*/
 
         // Step 0: get params
+        // si des params ont été passés à l'initialisation du plugin
         if (params !== undefined) {
 
+            // ajouter les paramètres par défaut s'ils n'ont pas été setup à l'initialisation
             for (var k in defaults) {
                 if(!tarteaucitron.parameters.hasOwnProperty(k)) {
                     tarteaucitron.parameters[k] = defaults[k];
@@ -272,11 +296,19 @@ var tarteaucitron = {
             }
         }
 
-        // global
+        // ajout des variables globales
         tarteaucitron.orientation = tarteaucitron.parameters.orientation;
+
+        // Open the panel with this hashtag
         tarteaucitron.hashtag = tarteaucitron.parameters.hashtag;
+
+        // hightPrivacy à false active le consentement au scroll, non valide en UE
         tarteaucitron.highPrivacy = tarteaucitron.parameters.highPrivacy;
+
+        // lire la valeur Do Not Track du navigateur ou pas
         tarteaucitron.handleBrowserDNTRequest = tarteaucitron.parameters.handleBrowserDNTRequest;
+
+        // Custom element ID used to open the panel
         tarteaucitron.customCloserId = tarteaucitron.parameters.customCloserId;
 
         // google consent mode
@@ -2109,25 +2141,32 @@ var tarteaucitron = {
     "fixSelfXSS": function(html) {
         return html.toString().replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
     },
+    // fonction qui renvoie la langue en fonction de plusieurs conditions
     "getLanguage": function () {
         "use strict";
 
         var availableLanguages = 'ar,bg,ca,cn,cs,da,de,et,el,en,es,fi,fr,hr,hu,it,ja,ko,lb,lt,lv,nl,no,oc,pl,pt,ro,ru,se,sk,sv,tr,uk,vi,zh',
             defaultLanguage = 'en';
 
+        // si la variable tarteaucitronForceLanguage contient une langue par défaut (soit initialisée avant le plugin)  
         if (tarteaucitronForceLanguage !== '') {
+
+            // tester si cette langue est contenue dans availableLanguages 
             if (availableLanguages.indexOf(tarteaucitronForceLanguage) !== -1) {
+                // si oui, renvoyer celle-ci
                 return tarteaucitronForceLanguage;
             }
         }
 
-        // get the html lang
+        // renvoyer le html lang si disponible
         if (document.documentElement.getAttribute("lang") !== undefined && document.documentElement.getAttribute("lang") !== null) {
             if (availableLanguages.indexOf(document.documentElement.getAttribute("lang").substr(0, 2)) !== -1) {
                 return document.documentElement.getAttribute("lang").substr(0, 2);
             }
         }
 
+        // L'interface Navigator représente l'état et l'identité de l'agent utilisateur courant (navigateur). 
+        // Si pas dispo, renvoyer le default
         if (!navigator) { return defaultLanguage; }
 
         var lang = navigator.language || navigator.browserLanguage ||
