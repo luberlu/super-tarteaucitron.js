@@ -21,7 +21,7 @@
             "showDetailsOnClick": true, /* Click to expand the description */
             "serviceDefaultState": "wait", /* Default state (true - wait - false) */
                             
-            "showAlertSmall": false, /* Show the small banner on bottom right */
+            "showAlertSmall": true, /* Show the small banner on bottom right */
             "cookieslist": false, /* Show the cookie list */
                             
             "closePopup": false, /* Show a close X on the banner */
@@ -69,6 +69,8 @@
             // tarteaucitron.user.gtagCrossdomain = ['example.com', 'example2.com'];
             tarteaucitron.user.gtagMore = function () { /* add here your optionnal gtag() */ };
             (tarteaucitron.job = tarteaucitron.job || []).push('gtag');
+
+            (tarteaucitron.job = tarteaucitron.job || []).push('gcmfunctionality');
         </script>
     </body>
 </html>

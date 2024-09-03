@@ -1425,10 +1425,12 @@ var tarteaucitron = {
             // on change le status du service en cours dans l'array state
             tarteaucitron.state[key] = status;
 
-            // on ajoute un cookie pour le status du service
+            // on modifie le cookie tarteaucitron pour le status du service en cours
             tarteaucitron.cookie.create(key, status);
 
+            // on modifie les couleurs pour le service en cours (allow/deny vert/rouge)
             tarteaucitron.userInterface.color(key, status);
+
             if (status == true) {
                 itemStatusElem.innerHTML = tarteaucitron.lang.allowed;
                 tarteaucitron.sendEvent(key + '_allowed');
@@ -1439,108 +1441,119 @@ var tarteaucitron = {
         },
         "color": function (key, status) {
             "use strict";
+
             var c = 'tarteaucitron',
+
                 nbDenied = 0,
                 nbPending = 0,
                 nbAllowed = 0,
+                // nombre de services ajoutés
                 sum = tarteaucitron.job.length,
                 index,
                 s = tarteaucitron.services;
 
+            // s'il y a une key passée en paramètre
             if (key !== "") {
 
-            if (status === true) {
-                tarteaucitron.userInterface.addClass(key + 'Line', 'tarteaucitronIsAllowed');
-                tarteaucitron.userInterface.removeClass(key + 'Line', 'tarteaucitronIsDenied');
-                document.getElementById(key + 'Allowed').setAttribute('aria-pressed', 'true');
-                document.getElementById(key + 'Denied').setAttribute('aria-pressed', 'false');
-            } else if (status === false) {
-                tarteaucitron.userInterface.removeClass(key + 'Line', 'tarteaucitronIsAllowed');
-                tarteaucitron.userInterface.addClass(key + 'Line', 'tarteaucitronIsDenied');
-                document.getElementById(key + 'Allowed').setAttribute('aria-pressed', 'false');
-                document.getElementById(key + 'Denied').setAttribute('aria-pressed', 'true');
-            } else {
-                document.getElementById(key + 'Allowed').setAttribute('aria-pressed', 'false');
-                document.getElementById(key + 'Denied').setAttribute('aria-pressed', 'false');
-            }
-
-            // check if all services are allowed
-            var sumToRemove = 0;
-            for (index = 0; index < sum; index += 1) {
-
-                if (typeof s[tarteaucitron.job[index]].safeanalytic !== "undefined" && s[tarteaucitron.job[index]].safeanalytic === true) {
-                    sumToRemove += 1;
-                    continue;
+                // changement de l'UI en fonction du status, ainsi que les attributs d'accessibilité
+                if (status === true) {
+                    tarteaucitron.userInterface.addClass(key + 'Line', 'tarteaucitronIsAllowed');
+                    tarteaucitron.userInterface.removeClass(key + 'Line', 'tarteaucitronIsDenied');
+                    document.getElementById(key + 'Allowed').setAttribute('aria-pressed', 'true');
+                    document.getElementById(key + 'Denied').setAttribute('aria-pressed', 'false');
+                } else if (status === false) {
+                    tarteaucitron.userInterface.removeClass(key + 'Line', 'tarteaucitronIsAllowed');
+                    tarteaucitron.userInterface.addClass(key + 'Line', 'tarteaucitronIsDenied');
+                    document.getElementById(key + 'Allowed').setAttribute('aria-pressed', 'false');
+                    document.getElementById(key + 'Denied').setAttribute('aria-pressed', 'true');
+                } else {
+                    document.getElementById(key + 'Allowed').setAttribute('aria-pressed', 'false');
+                    document.getElementById(key + 'Denied').setAttribute('aria-pressed', 'false');
                 }
 
-                if (tarteaucitron.state[tarteaucitron.job[index]] === false) {
-                    nbDenied += 1;
-                } else if (tarteaucitron.state[tarteaucitron.job[index]] === undefined) {
-                    nbPending += 1;
-                } else if (tarteaucitron.state[tarteaucitron.job[index]] === true) {
-                    nbAllowed += 1;
+                // check if all services are allowed (save nbr of denied, pending and allowed)
+                var sumToRemove = 0;
+                for (index = 0; index < sum; index += 1) {
+
+                    // ne pas prendre en compte les services dont la valeur safeanalytic est à true
+                    if (typeof s[tarteaucitron.job[index]].safeanalytic !== "undefined" && s[tarteaucitron.job[index]].safeanalytic === true) {
+                        sumToRemove += 1;
+                        continue;
+                    }
+
+                    if (tarteaucitron.state[tarteaucitron.job[index]] === false) {
+                        nbDenied += 1;
+                    } else if (tarteaucitron.state[tarteaucitron.job[index]] === undefined) {
+                        nbPending += 1;
+                    } else if (tarteaucitron.state[tarteaucitron.job[index]] === true) {
+                        nbAllowed += 1;
+                    }
                 }
-            }
-            sum -= sumToRemove;
 
-            tarteaucitron.userInterface.css(c + 'DotGreen', 'width', ((100 / sum) * nbAllowed) + '%');
-            tarteaucitron.userInterface.css(c + 'DotYellow', 'width', ((100 / sum) * nbPending) + '%');
-            tarteaucitron.userInterface.css(c + 'DotRed', 'width', ((100 / sum) * nbDenied) + '%');
+                // supprimer sur le total ceux inutiles à la comptabilité
+                sum -= sumToRemove;
 
-            if (nbDenied === 0 && nbPending === 0) {
-                tarteaucitron.userInterface.removeClass(c + 'AllDenied', c + 'IsSelected');
-                tarteaucitron.userInterface.addClass(c + 'AllAllowed', c + 'IsSelected');
+                // Pour la fenêtre ShowAlertSmall à true, changer l'UI
+                tarteaucitron.userInterface.css(c + 'DotGreen', 'width', ((100 / sum) * nbAllowed) + '%');
+                tarteaucitron.userInterface.css(c + 'DotYellow', 'width', ((100 / sum) * nbPending) + '%');
+                tarteaucitron.userInterface.css(c + 'DotRed', 'width', ((100 / sum) * nbDenied) + '%');
 
-                tarteaucitron.userInterface.addClass(c + 'MainLineOffset', c + 'IsAllowed');
-                tarteaucitron.userInterface.removeClass(c + 'MainLineOffset', c + 'IsDenied');
+                if (nbDenied === 0 && nbPending === 0) {
+                    tarteaucitron.userInterface.removeClass(c + 'AllDenied', c + 'IsSelected');
+                    tarteaucitron.userInterface.addClass(c + 'AllAllowed', c + 'IsSelected');
 
-                document.getElementById(c + 'AllDenied').setAttribute('aria-pressed', 'false');
-                document.getElementById(c + 'AllAllowed').setAttribute('aria-pressed', 'true');
+                    tarteaucitron.userInterface.addClass(c + 'MainLineOffset', c + 'IsAllowed');
+                    tarteaucitron.userInterface.removeClass(c + 'MainLineOffset', c + 'IsDenied');
 
-            } else if (nbAllowed === 0 && nbPending === 0) {
-                tarteaucitron.userInterface.removeClass(c + 'AllAllowed', c + 'IsSelected');
-                tarteaucitron.userInterface.addClass(c + 'AllDenied', c + 'IsSelected');
+                    document.getElementById(c + 'AllDenied').setAttribute('aria-pressed', 'false');
+                    document.getElementById(c + 'AllAllowed').setAttribute('aria-pressed', 'true');
 
-                tarteaucitron.userInterface.removeClass(c + 'MainLineOffset', c + 'IsAllowed');
-                tarteaucitron.userInterface.addClass(c + 'MainLineOffset', c + 'IsDenied');
+                } else if (nbAllowed === 0 && nbPending === 0) {
+                    tarteaucitron.userInterface.removeClass(c + 'AllAllowed', c + 'IsSelected');
+                    tarteaucitron.userInterface.addClass(c + 'AllDenied', c + 'IsSelected');
 
-                document.getElementById(c + 'AllDenied').setAttribute('aria-pressed', 'true');
-                document.getElementById(c + 'AllAllowed').setAttribute('aria-pressed', 'false');
+                    tarteaucitron.userInterface.removeClass(c + 'MainLineOffset', c + 'IsAllowed');
+                    tarteaucitron.userInterface.addClass(c + 'MainLineOffset', c + 'IsDenied');
 
-            } else {
-                tarteaucitron.userInterface.removeClass(c + 'AllAllowed', c + 'IsSelected');
-                tarteaucitron.userInterface.removeClass(c + 'AllDenied', c + 'IsSelected');
+                    document.getElementById(c + 'AllDenied').setAttribute('aria-pressed', 'true');
+                    document.getElementById(c + 'AllAllowed').setAttribute('aria-pressed', 'false');
 
-                tarteaucitron.userInterface.removeClass(c + 'MainLineOffset', c + 'IsAllowed');
-                tarteaucitron.userInterface.removeClass(c + 'MainLineOffset', c + 'IsDenied');
+                } else {
+                    tarteaucitron.userInterface.removeClass(c + 'AllAllowed', c + 'IsSelected');
+                    tarteaucitron.userInterface.removeClass(c + 'AllDenied', c + 'IsSelected');
 
-                document.getElementById(c + 'AllDenied').setAttribute('aria-pressed', 'false');
-                document.getElementById(c + 'AllAllowed').setAttribute('aria-pressed', 'false');
-            }
+                    tarteaucitron.userInterface.removeClass(c + 'MainLineOffset', c + 'IsAllowed');
+                    tarteaucitron.userInterface.removeClass(c + 'MainLineOffset', c + 'IsDenied');
 
-            // close the alert if all service have been reviewed
-            if (nbPending === 0) {
-                tarteaucitron.userInterface.closeAlert();
-            }
-
-            if (tarteaucitron.services[key].cookies.length > 0 && status === false) {
-                tarteaucitron.cookie.purge(tarteaucitron.services[key].cookies);
-            }
-
-            if (status === true) {
-                if (document.getElementById('tacCL' + key) !== null) {
-                    document.getElementById('tacCL' + key).innerHTML = '...';
+                    document.getElementById(c + 'AllDenied').setAttribute('aria-pressed', 'false');
+                    document.getElementById(c + 'AllAllowed').setAttribute('aria-pressed', 'false');
                 }
-                setTimeout(function () {
+
+                // Si un choix a été fait, il n'y a plus de pending, 
+                // donc la fenêtre de cookie est fermée
+                // close the alert if all service have been reviewed
+                if (nbPending === 0) {
+                    tarteaucitron.userInterface.closeAlert();
+                }
+
+                if (tarteaucitron.services[key].cookies.length > 0 && status === false) {
+                    tarteaucitron.cookie.purge(tarteaucitron.services[key].cookies);
+                }
+
+                if (status === true) {
+                    if (document.getElementById('tacCL' + key) !== null) {
+                        document.getElementById('tacCL' + key).innerHTML = '...';
+                    }
+                    setTimeout(function () {
+                        tarteaucitron.cookie.checkCount(key);
+                    }, 2500);
+                } else {
                     tarteaucitron.cookie.checkCount(key);
-                }, 2500);
-            } else {
-                tarteaucitron.cookie.checkCount(key);
-            }
+                }
 
             }
 
-	    // groups
+	        // groups
             var cats = document.querySelectorAll('[id^="tarteaucitronServicesTitle_"]')
             Array.prototype.forEach.call(cats, function(item) {
                 var cat = item.getAttribute('id').replace(/^(tarteaucitronServicesTitle_)/, ""),
@@ -1977,18 +1990,38 @@ var tarteaucitron = {
                 }
             }
 
+            // initialisation d'un objet Date à valeur de maintenant
             var d = new Date(),
+
+                // Milliseconds since Jan 1, 1970, 00:00:00.000 GMT
                 time = d.getTime(),
+
+                // On ajoute à time la valeur de timeExpire, par défaut à 365 jours
                 expireTime = time + timeExpire, // 365 days
+
+                // création d'une regex pour trouver le service en cours
                 regex = new RegExp("!" + key + "=(wait|true|false)", "g"),
+
+                // suppression de la valeur du cookie pour le service en cours
                 cookie = tarteaucitron.cookie.read().replace(regex, ""),
+
+                // valeur du cookie + service en cours
                 value = tarteaucitron.parameters.cookieName + '=' + cookie + '!' + key + '=' + status,
+
+                // ajout de la valeur domain si multisites    
                 domain = (tarteaucitron.parameters.cookieDomain !== undefined && tarteaucitron.parameters.cookieDomain !== '') ? '; domain=' + tarteaucitron.parameters.cookieDomain : '',
+
+                // Si le site est https, ajout de la valeur Secure
                 secure = location.protocol === 'https:' ? '; Secure' : '';
 
+            // On set le time à la valeur d'expiration pour le cookie    
             d.setTime(expireTime);
+
+            // On ajoute le cookie au navigateur
             document.cookie = value + '; expires=' + d.toGMTString() + '; path=/' + domain + secure + '; samesite=lax';
 
+
+            // On envoie l'évènement tac.consent_updated
             tarteaucitron.sendEvent('tac.consent_updated');
         },
         "read": function () {
