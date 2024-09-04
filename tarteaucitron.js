@@ -2078,6 +2078,7 @@ var tarteaucitron = {
                 });
             }
         },
+        // Fonction pour gérer l'UI des éléments en fonction des changements à l'écran
         "jsSizing": function (type) {
             "use strict";
             var scrollbarMarginRight = 10,
@@ -2440,45 +2441,79 @@ var tarteaucitron = {
 
             return false; // Si aucune correspondance n'est trouvée après avoir parcouru tout le tableau, retourne false
         },
-
+       // Fonction pour mettre à jour et afficher le nombre de cookies ainsi que leur liste
         "number": function () {
             "use strict";
-            var cookies = document.cookie.split(';'),
-                nb = (document.cookie !== '') ? cookies.length : 0,
-                html = '',
-                i,
-                name,
-                namea,
-                nameb,
-                c,
-                d,
-                s = (nb > 1) ? 's' : '',
-                savedname,
-                regex = /^https?\:\/\/([^\/?#]+)(?:[\/?#]|$)/i,
-                regexedDomain = (tarteaucitron.cdn.match(regex) !== null) ? tarteaucitron.cdn.match(regex)[1] : tarteaucitron.cdn,
-                host = (tarteaucitron.domain !== undefined) ? tarteaucitron.domain : regexedDomain;
 
+            // Récupère tous les cookies du document et les sépare par point-virgule
+            var cookies = document.cookie.split(';'),
+
+                // Nombre de cookies (0 si aucun cookie)
+                nb = (document.cookie !== '') ? cookies.length : 0,
+
+                // Variable pour stocker le HTML à injecter dans la page
+                html = '',
+
+                i, name, namea, nameb, c, d,
+
+                // Suffixe 's' si plus d'un cookie
+                s = (nb > 1) ? 's' : '',
+
+                // Variable pour mémoriser le nom du cookie précédemment traité
+                savedname,
+
+                // Regex pour extraire le domaine d'une URL
+                regex = /^https?\:\/\/([^\/?#]+)(?:[\/?#]|$)/i,
+
+                // Extraction du domaine à partir de l'URL cdn (cdn est l'url d'appel du script)
+                regexedDomain = (tarteaucitron.cdn.match(regex) !== null) ? tarteaucitron.cdn.match(regex)[1] : tarteaucitron.cdn,
+                
+                // Utilise le domaine spécifié dans tarteaucitron ou extrait du CDN
+                host = (tarteaucitron.domain !== undefined) ? tarteaucitron.domain : regexedDomain; 
+
+            // Trie les cookies en fonction de leur propriétaire et de leur nom
             cookies = cookies.sort(function (a, b) {
+                // Récupère les noms des cookies sans espaces
                 namea = a.split('=', 1).toString().replace(/ /g, '');
                 nameb = b.split('=', 1).toString().replace(/ /g, '');
+
+                // Détermine le propriétaire du cookie ou assigne '0' s'il n'est pas défini
                 c = (tarteaucitron.cookie.owner[namea] !== undefined) ? tarteaucitron.cookie.owner[namea] : '0';
                 d = (tarteaucitron.cookie.owner[nameb] !== undefined) ? tarteaucitron.cookie.owner[nameb] : '0';
+
+                // Compare les cookies par propriétaire et par nom
                 if (c + a > d + b) { return 1; }
                 if (c + a < d + b) { return -1; }
                 return 0;
             });
 
+            console.log('cookies', cookies);
+
+            // Génère le HTML pour afficher les cookies
             if (document.cookie !== '') {
                 for (i = 0; i < nb; i += 1) {
+
+                    // Récupère le nom du cookie sans espaces
                     name = cookies[i].split('=', 1).toString().replace(/ /g, '');
+
+                    ///console.log(name)
+                    //console.log(tarteaucitron.cookie.owner)
+                    if(tarteaucitron.cookie.owner[name] !== undefined){
+                        console.log(tarteaucitron.cookie.owner[name].join(' // '))
+                    }
+
+                    // Ajoute un en-tête si le propriétaire du cookie a changé
                     if (tarteaucitron.cookie.owner[name] !== undefined && tarteaucitron.cookie.owner[name].join(' // ') !== savedname) {
+
                         savedname = tarteaucitron.cookie.owner[name].join(' // ');
                         html += '<div class="tarteaucitronHidden">';
                         html += '     <span class="tarteaucitronTitle tarteaucitronH3" role="heading" aria-level="3">';
                         html += '        ' + tarteaucitron.cookie.owner[name].join(' // ');
                         html += '    </span>';
                         html += '</div><ul class="cookie-list">';
+
                     } else if (tarteaucitron.cookie.owner[name] === undefined && host !== savedname) {
+                        // Si le cookie n'a pas de propriétaire défini et que le domaine a changé, ajoute un nouvel en-tête
                         savedname = host;
                         html += '<div class="tarteaucitronHidden">';
                         html += '     <span class="tarteaucitronTitle tarteaucitronH3" role="heading" aria-level="3">';
@@ -2486,6 +2521,9 @@ var tarteaucitron = {
                         html += '    </span>';
                         html += '</div><ul class="cookie-list">';
                     }
+
+            
+                    // Ajoute chaque cookie à la liste HTML avec un bouton pour le supprimer
                     html += '<li class="tarteaucitronCookiesListMain">';
                     html += '    <div class="tarteaucitronCookiesListLeft"><button type="button" class="purgeBtn" data-cookie="' + tarteaucitron.fixSelfXSS(cookies[i].split('=', 1)) + '"><strong>&times;</strong></button> <strong>' + tarteaucitron.fixSelfXSS(name) + '</strong>';
                     html += '    </div>';
@@ -2494,45 +2532,61 @@ var tarteaucitron = {
                 }
                 html += '</ul>';
             } else {
+                // Si aucun cookie n'est présent, affiche un message vide
                 html += '<div class="tarteaucitronCookiesListMain">';
                 html += '    <div class="tarteaucitronCookiesListLeft"><strong>-</strong></div>';
                 html += '    <div class="tarteaucitronCookiesListRight"></div>';
                 html += '</div>';
             }
 
+            // Ajoute un espaceur pour la mise en forme
             html += '<div class="tarteaucitronHidden tarteaucitron-spacer-20"></div>';
 
+            // Met à jour l'élément HTML avec la liste des cookies générée
             if (document.getElementById('tarteaucitronCookiesList') !== null) {
                 document.getElementById('tarteaucitronCookiesList').innerHTML = html;
             }
 
+            // Met à jour le nombre de cookies affiché dans l'interface utilisateur
             if (document.getElementById('tarteaucitronCookiesNumber') !== null) {
                 document.getElementById('tarteaucitronCookiesNumber').innerHTML = nb;
                 document.getElementById('tarteaucitronCookiesNumber').setAttribute("aria-label", nb + ' cookie' + s + " - " + tarteaucitron.lang.toggleInfoBox);
                 document.getElementById('tarteaucitronCookiesNumber').setAttribute("title", nb + ' cookie' + s + " - " + tarteaucitron.lang.toggleInfoBox);
             }
 
+            // Met à jour l'élément bis pour le nombre de cookies, si présent
             if (document.getElementById('tarteaucitronCookiesNumberBis') !== null) {
                 document.getElementById('tarteaucitronCookiesNumberBis').innerHTML = nb + ' cookie' + s;
             }
 
+            // Attache un événement de clic à chaque bouton de suppression de cookie
             var purgeBtns = document.getElementsByClassName("purgeBtn");
             for (i = 0; i < purgeBtns.length; i++) {
                 tarteaucitron.addClickEventToElement(purgeBtns[i], function () {
-                    tarteaucitron.cookie.purge([this.dataset.cookie]);
-                    tarteaucitron.cookie.number();
-                    tarteaucitron.userInterface.jsSizing('cookie');
-                    return false;
+                    tarteaucitron.cookie.purge([this.dataset.cookie]); // Supprime le cookie correspondant
+                    tarteaucitron.cookie.number(); // Met à jour le nombre de cookies après suppression
+                    tarteaucitron.userInterface.jsSizing('cookie'); // Ajuste la taille de l'interface utilisateur si nécessaire
+                    return false; // Empêche le comportement par défaut du bouton
                 });
             }
 
+            // Vérifie et met à jour le nombre de cookies pour chaque service
             for (i = 0; i < tarteaucitron.job.length; i += 1) {
                 tarteaucitron.cookie.checkCount(tarteaucitron.job[i]);
             }
-        }
+        },
     },
+    // Fonction pour prévenir les attaques XSS (Cross-Site Scripting) 
+    // en échappant les caractères spéciaux dans une chaîne HTML 
+    // (utile pour les chaines de caractères récupérées des cookies)
     "fixSelfXSS": function(html) {
-        return html.toString().replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+        // Convertit l'entrée en chaîne de caractères et remplace les caractères spéciaux par leurs entités HTML correspondantes
+        return html.toString()
+            .replace(/&/g, "&amp;")   // Remplace le caractère '&' par '&amp;'
+            .replace(/</g, "&lt;")    // Remplace le caractère '<' par '&lt;'
+            .replace(/>/g, "&gt;")    // Remplace le caractère '>' par '&gt;'
+            .replace(/"/g, "&quot;")  // Remplace le caractère '"' par '&quot;'
+            .replace(/'/g, "&#039;"); // Remplace le caractère "'" par '&#039;'
     },
     // fonction qui renvoie la langue en fonction de plusieurs conditions
     "getLanguage": function () {
