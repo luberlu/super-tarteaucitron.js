@@ -1536,17 +1536,27 @@ var tarteaucitron = {
                     tarteaucitron.userInterface.closeAlert();
                 }
 
+                // Si le service en cours a des cookies d'ajoutés, et que le status passe à false
                 if (tarteaucitron.services[key].cookies.length > 0 && status === false) {
+
+                    // purge des cookies
                     tarteaucitron.cookie.purge(tarteaucitron.services[key].cookies);
                 }
 
+                // si le status passe à true, mettre à jour le comptage de cookies (fonctionnalité masquée)
                 if (status === true) {
+
+                    // on ajoute ... le temps que les cookies s'ajoutent
                     if (document.getElementById('tacCL' + key) !== null) {
                         document.getElementById('tacCL' + key).innerHTML = '...';
                     }
+
+                    // 2.5 secondes plus tard, on mets à jour la valeur via la fonction checkCount()
                     setTimeout(function () {
                         tarteaucitron.cookie.checkCount(key);
                     }, 2500);
+
+                // sinon, pas besoin d'attendre, ça a été supprimé en synchrone, on mets à jour la valeur    
                 } else {
                     tarteaucitron.cookie.checkCount(key);
                 }
@@ -2024,34 +2034,77 @@ var tarteaucitron = {
             // On envoie l'évènement tac.consent_updated
             tarteaucitron.sendEvent('tac.consent_updated');
         },
-        "read": function () {
+        // fonction pour lire la valeur du cookie tarteaucitron=
+       "read": function () {
             "use strict";
+
+            // Définit le nom du cookie avec un signe égal pour faciliter la recherche
             var nameEQ = tarteaucitron.parameters.cookieName + "=",
+
+                // Divise la chaîne de cookies document.cookie en un tableau en utilisant le point-virgule comme séparateur
                 ca = document.cookie.split(';'),
                 i,
+                // Variable pour stocker chaque cookie lors de la boucle
                 c;
 
+            // Parcourt tous les cookies dans le tableau
             for (i = 0; i < ca.length; i += 1) {
-                c = ca[i];
+
+                c = ca[i]; // Récupère le cookie actuel
+
+                // Supprime les espaces au début du cookie
                 while (c.charAt(0) === ' ') {
+
+                    // Enlève le premier caractère si c'est un espace
                     c = c.substring(1, c.length);
                 }
+
+                // Vérifie si le cookie commence par le nom du cookie recherché
                 if (c.indexOf(nameEQ) === 0) {
+
+                    // Retourne la valeur du cookie en supprimant le nom et l'égal
                     return c.substring(nameEQ.length, c.length);
                 }
             }
+
+            // Retourne une chaîne vide si le cookie n'est pas trouvé
             return '';
         },
+        // fonction qui permet de purge les cookies passés en paramètre
+        /* exemple : 
+        "_ga"
+        "_gat"
+        "_gid"
+        "__utma"
+        "__utmb"
+        "__utmc"
+        "_gat_gtag_G_20ZX3F8KTE"
+        "_ga_20ZX3F8KTE"
+        "_gcl_au"
+        */
         "purge": function (arr) {
             "use strict";
             var i;
 
             for (i = 0; i < arr.length; i += 1) {
 
+                // création d'une regex pour le cookie ciblé
                 var rgxpCookie = new RegExp("^(.*;)?\\s*" + arr[i] + "\\s*=\\s*[^;]+(.*)?$");
+
+                // Vérifie si un cookie correspondant au motif rgxpCookie existe dans document.cookie
                 if (document.cookie.match(rgxpCookie)) {
+                    // Tente de supprimer le cookie en le définissant avec une date d'expiration passée
+                    // et en spécifiant le chemin pour tous les chemins du site web
                     document.cookie = arr[i] + '=; expires=Thu, 01 Jan 2000 00:00:00 GMT; path=/;';
+                    
+                    // Tente de supprimer le cookie en le définissant avec une date d'expiration passée,
+                    // en spécifiant le chemin pour tous les chemins du site web
+                    // et en utilisant le domaine complet de l'hôte actuel (par exemple, www.example.com)
                     document.cookie = arr[i] + '=; expires=Thu, 01 Jan 2000 00:00:00 GMT; path=/; domain=.' + location.hostname + ';';
+                    
+                    // Tente de supprimer le cookie en le définissant avec une date d'expiration passée,
+                    // en spécifiant le chemin pour tous les chemins du site web
+                    // et en utilisant seulement le domaine de deuxième niveau (par exemple, example.com)
                     document.cookie = arr[i] + '=; expires=Thu, 01 Jan 2000 00:00:00 GMT; path=/; domain=.' + location.hostname.split('.').slice(-2).join('.') + ';';
                 }
             }
