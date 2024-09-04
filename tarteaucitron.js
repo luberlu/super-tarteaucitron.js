@@ -758,7 +758,7 @@ var tarteaucitron = {
                 tarteaucitron
                     .addInternalScript(tarteaucitron.cdn + 'advertising' + (useMinifiedJS ? '.min' : '') + '.js', '', 
                     function () {
-                    // si ce fichier est chargé, c'est qu'Ad blocker n'est pas actif, donc mise à jour de cette variable
+                    // si ce fichier est chargé, c'est qu'Ad blocker premium n'est pas actif, donc mise à jour de cette variable
                     if (tarteaucitronNoAdBlocker === true || tarteaucitron.parameters.adblocker === false) {
 
                         div.id = 'tarteaucitronRoot';
@@ -891,12 +891,28 @@ var tarteaucitron = {
                     }, 100);
                 }
 
+                // grouper les services par catégorie
                 if(tarteaucitron.parameters.groupServices === true) {
+                    // création d'un élément html style
                     var tac_group_style = document.createElement('style');
+
+                    // ajout d'une règle css pour masquer le titre
                     tac_group_style.innerHTML = '.tarteaucitronTitle{display:none}';
+
+                    // ajout du custom style dans le head
                     document.head.appendChild(tac_group_style);
+
+                    // chercher tous les services
                     var cats = document.querySelectorAll('[id^="tarteaucitronServicesTitle_"]')
+
+
+                    console.log('on est la');
+                    console.log('cats', cats);
+
+            
+
                     Array.prototype.forEach.call(cats, function(item) {
+                 
                         var cat = item.getAttribute('id').replace(/^(tarteaucitronServicesTitle_)/, "");
                         if (cat !== "mandatory") {
                             var html = '';
@@ -1563,52 +1579,83 @@ var tarteaucitron = {
 
             }
 
-	        // groups
-            var cats = document.querySelectorAll('[id^="tarteaucitronServicesTitle_"]')
+	        // Sélectionne tous les éléments dont l'id commence par "tarteaucitronServicesTitle_"
+            var cats = document.querySelectorAll('[id^="tarteaucitronServicesTitle_"]');
+
+            // Parcourt chaque élément sélectionné
             Array.prototype.forEach.call(cats, function(item) {
+
+                // Extrait la partie de l'id après "tarteaucitronServicesTitle_"
                 var cat = item.getAttribute('id').replace(/^(tarteaucitronServicesTitle_)/, ""),
-                    total = document.getElementById("tarteaucitronServices_"+cat).childElementCount;
-                var doc = document.getElementById("tarteaucitronServices_"+cat),
+
+                    // Récupère le nombre total d'enfants de l'élément correspondant
+                    total = document.getElementById("tarteaucitronServices_" + cat).childElementCount;
+                
+                // Référence à l'élément contenant les services pour cette catégorie
+                var doc = document.getElementById("tarteaucitronServices_" + cat),
+
+                    // Compteurs pour les services refusés et acceptés
                     groupdenied = 0,
                     groupallowed = 0;
+
+                // Parcourt chaque enfant de l'élément de la catégorie de services pour compter les services acceptés et refusés
                 for (var ii = 0; ii < doc.children.length; ii++) {
+
+                    // Si le service est refusé, incrémente le compteur des refusés
                     if (doc.children[ii].className == "tarteaucitronLine tarteaucitronIsDenied") {
                         groupdenied++;
                     }
+                    // Si le service est accepté, incrémente le compteur des acceptés
                     if (doc.children[ii].className == "tarteaucitronLine tarteaucitronIsAllowed") {
                         groupallowed++;
                     }
                 }
+
+                // Si tous les services de la catégorie sont acceptés
                 if (total === groupallowed) {
-                    tarteaucitron.userInterface.removeClass('tarteaucitron-group-'+cat, 'tarteaucitronIsDenied');
-                    tarteaucitron.userInterface.addClass('tarteaucitron-group-'+cat, 'tarteaucitronIsAllowed');
 
-                    if (document.getElementById('tarteaucitron-reject-group-'+cat)) {
-                        document.getElementById('tarteaucitron-reject-group-'+cat).setAttribute('aria-pressed', 'false');
-                        document.getElementById('tarteaucitron-accept-group-'+cat).setAttribute('aria-pressed', 'true');
+                    // Met à jour l'interface utilisateur pour indiquer que tous les services de la catégorie sont acceptés
+                    tarteaucitron.userInterface.removeClass('tarteaucitron-group-' + cat, 'tarteaucitronIsDenied');
+                    tarteaucitron.userInterface.addClass('tarteaucitron-group-' + cat, 'tarteaucitronIsAllowed');
+
+                    // Met à jour les attributs ARIA pour les boutons accepter/refuser du groupe
+                    if (document.getElementById('tarteaucitron-reject-group-' + cat)) {
+                        document.getElementById('tarteaucitron-reject-group-' + cat).setAttribute('aria-pressed', 'false');
+                        document.getElementById('tarteaucitron-accept-group-' + cat).setAttribute('aria-pressed', 'true');
                     }
                 }
+
+                // Si tous les services de la catégorie sont refusés
                 if (total === groupdenied) {
-                    tarteaucitron.userInterface.addClass('tarteaucitron-group-'+cat, 'tarteaucitronIsDenied');
-                    tarteaucitron.userInterface.removeClass('tarteaucitron-group-'+cat, 'tarteaucitronIsAllowed');
+                    // Met à jour l'interface utilisateur pour indiquer que tous les services de la catégorie sont refusés
+                    tarteaucitron.userInterface.addClass('tarteaucitron-group-' + cat, 'tarteaucitronIsDenied');
+                    tarteaucitron.userInterface.removeClass('tarteaucitron-group-' + cat, 'tarteaucitronIsAllowed');
 
-                    if (document.getElementById('tarteaucitron-reject-group-'+cat)) {
-                        document.getElementById('tarteaucitron-reject-group-'+cat).setAttribute('aria-pressed', 'true');
-                        document.getElementById('tarteaucitron-accept-group-'+cat).setAttribute('aria-pressed', 'false');
+                    // Met à jour les attributs ARIA pour les boutons accepter/refuser du groupe
+                    if (document.getElementById('tarteaucitron-reject-group-' + cat)) {
+                        document.getElementById('tarteaucitron-reject-group-' + cat).setAttribute('aria-pressed', 'true');
+                        document.getElementById('tarteaucitron-accept-group-' + cat).setAttribute('aria-pressed', 'false');
                     }
                 }
+
+                // Si tous les services ne sont ni tous acceptés ni tous refusés
                 if (total !== groupdenied && total !== groupallowed) {
-                    tarteaucitron.userInterface.removeClass('tarteaucitron-group-'+cat, 'tarteaucitronIsDenied');
-                    tarteaucitron.userInterface.removeClass('tarteaucitron-group-'+cat, 'tarteaucitronIsAllowed');
+                    // Met à jour l'interface utilisateur pour indiquer un état indéterminé (ni tout accepté ni tout refusé)
+                    tarteaucitron.userInterface.removeClass('tarteaucitron-group-' + cat, 'tarteaucitronIsDenied');
+                    tarteaucitron.userInterface.removeClass('tarteaucitron-group-' + cat, 'tarteaucitronIsAllowed');
 
-                    if (document.getElementById('tarteaucitron-reject-group-'+cat)) {
-                        document.getElementById('tarteaucitron-reject-group-'+cat).setAttribute('aria-pressed', 'false');
-                        document.getElementById('tarteaucitron-accept-group-'+cat).setAttribute('aria-pressed', 'false');
+                    // Met à jour les attributs ARIA pour les boutons accepter/refuser du groupe
+                    if (document.getElementById('tarteaucitron-reject-group-' + cat)) {
+                        document.getElementById('tarteaucitron-reject-group-' + cat).setAttribute('aria-pressed', 'false');
+                        document.getElementById('tarteaucitron-accept-group-' + cat).setAttribute('aria-pressed', 'false');
                     }
                 }
+
+                // Réinitialise les compteurs pour la prochaine itération
                 groupdenied = 0;
                 groupallowed = 0;
             });
+
 
         },
         "openPanel": function () {
@@ -2109,68 +2156,111 @@ var tarteaucitron = {
                 }
             }
         },
+        // Fonction pour mettre à jour le nombre de cookies d'un service (key) côté UI
         "checkCount": function (key) {
             "use strict";
+
+            // Récupère la liste des cookies associés au service spécifié par la clé (key)
             var arr = tarteaucitron.services[key].cookies,
+                // Nombre total de cookies dans la liste
                 nb = arr.length,
+                // Compteur de cookies actuellement présents dans le navigateur
                 nbCurrent = 0,
+                // Chaîne HTML pour afficher le résultat
                 html = '',
                 i,
+
+                // Vérifie si le cookie pour le service donné est présent dans document.cookie
                 status = document.cookie.indexOf(key + '=true'),
+
+                // Label par défaut pour "cookie"
                 cookieLabel = "cookie";
 
+            // Si la langue du site est l'allemand, modifie le label du cookie
             if (tarteaucitron.getLanguage() === "de") {
                 cookieLabel = "Cookie";
             }
 
+            // Si le cookie du service est présent dans "tarteaucitron=" et qu'il n'y a aucun cookie dans la liste
             if (status >= 0 && nb === 0) {
+
+                // Utilise le message indiquant qu'aucun cookie n'est utilisé
                 html += tarteaucitron.lang.useNoCookie;
+
+            // Si le cookie du service est présent dans "tarteaucitron=" et qu'il y a des cookies dans la liste    
             } else if (status >= 0) {
+             
+                // Parcourt tous les cookies dans la liste
                 for (i = 0; i < nb; i += 1) {
+
+                    // Vérifie si chaque cookie du service est présent dans document.cookie
                     if (document.cookie.indexOf(arr[i] + '=') !== -1) {
+
+                        // Incrémente le compteur de cookies actuellement présents
                         nbCurrent += 1;
+
+                        // Si le cookie n'a pas encore de service associé, initialise un tableau pour lui (tableau inversé)
                         if (tarteaucitron.cookie.owner[arr[i]] === undefined) {
                             tarteaucitron.cookie.owner[arr[i]] = [];
                         }
+
+                        // Si le nom du service n'est pas encore associé au cookie, l'ajoute à la liste des propriétaires
+                        // Cela crée une relation cookie_name->[service], utile pour des recherches futures
                         if (tarteaucitron.cookie.crossIndexOf(tarteaucitron.cookie.owner[arr[i]], tarteaucitron.services[key].name) === false) {
                             tarteaucitron.cookie.owner[arr[i]].push(tarteaucitron.services[key].name);
                         }
                     }
                 }
 
+                // Si des cookies sont actuellement présents
                 if (nbCurrent > 0) {
+
+                    // Construit le message indiquant combien de cookies sont utilisés actuellement
                     html += tarteaucitron.lang.useCookieCurrent + ' ' + nbCurrent + ' ' + cookieLabel;
                     if (nbCurrent > 1) {
-                        html += 's';
+                        html += 's'; // Ajoute un "s" pour le pluriel si plus d'un cookie
                     }
                     html += '.';
                 } else {
+                    // Si aucun cookie n'est actuellement présent, indique qu'aucun cookie n'est utilisé
                     html += tarteaucitron.lang.useNoCookie;
                 }
             } else if (nb === 0) {
+                // Si le cookie du service n'est pas présent et qu'il n'y a aucun cookie dans la liste
+                // Utilise le message indiquant qu'il n'y a pas de cookies
                 html = tarteaucitron.lang.noCookie;
             } else {
+                // Si le cookie du service n'est pas présent et qu'il y a des cookies dans la liste
+                // Construit le message indiquant combien de cookies sont utilisés par le service
                 html += tarteaucitron.lang.useCookie + ' ' + nb + ' ' + cookieLabel;
                 if (nb > 1) {
-                    html += 's';
+                    html += 's'; // Ajoute un "s" pour le pluriel si plus d'un cookie
                 }
                 html += '.';
             }
 
+            // Met à jour le contenu HTML de l'élément avec l'ID 'tacCL' suivi de la clé (key)
             if (document.getElementById('tacCL' + key) !== null) {
                 document.getElementById('tacCL' + key).innerHTML = html;
             }
         },
+        // Fonction pour vérifier si l'élement existe dans le tableau
         "crossIndexOf": function (arr, match) {
             "use strict";
-            var i;
+
+            var i; // Déclare une variable pour la boucle
+
+            // Parcourt tous les éléments du tableau arr
             for (i = 0; i < arr.length; i += 1) {
+                // Vérifie si l'élément courant du tableau est égal à la valeur recherchée (match)
                 if (arr[i] === match) {
-                    return true;
+                    return true; // Si une correspondance est trouvée, retourne true
                 }
             }
-            return false;
+
+            return false; // Si aucune correspondance n'est trouvée après avoir parcouru tout le tableau, retourne false
         },
+
         "number": function () {
             "use strict";
             var cookies = document.cookie.split(';'),
