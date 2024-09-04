@@ -1100,6 +1100,7 @@ var tarteaucitron = {
             });
         });
     },
+    // Fonction pour ajouter un service de cookies
     "addService": function (serviceId) {
         "use strict";
         var html = '',
@@ -1235,6 +1236,7 @@ var tarteaucitron = {
         // envoyer un évènement pour avertir de l'ajout d'un service
         tarteaucitron.sendEvent(service.key + '_added');
     },
+    // fonction pour envoyer un évènement javascript, inutile car >=IE9
     "sendEvent" : function(event_key) {
         if(event_key !== undefined) {
             //ie compatibility
@@ -1250,31 +1252,49 @@ var tarteaucitron = {
             document.dispatchEvent(send_event_item);
         }
     },
+    // Fonction pour nettoyer un tableau en supprimant les doublons 
+    // et en triant les éléments par type et clé de service
     "cleanArray": function cleanArray(arr) {
         "use strict";
-        var i,
-            len = arr.length,
-            out = [],
-            obj = {},
-            s = tarteaucitron.services;
 
+        var i, // Index pour la boucle
+            len = arr.length, // Longueur du tableau d'entrée
+            out = [], // Tableau de sortie qui contiendra les éléments nettoyés et triés
+            obj = {}, // Objet utilisé pour vérifier les doublons
+            s = tarteaucitron.services; // Raccourci pour accéder aux services définis dans tarteaucitron
+
+        // Boucle pour parcourir chaque élément du tableau d'entrée
         for (i = 0; i < len; i += 1) {
+
+            // Si l'élément n'est pas déjà dans l'objet 'obj', c'est un nouvel élément unique
             if (!obj[arr[i]]) {
+
+                // Marque l'élément comme traité en l'ajoutant à 'obj'
                 obj[arr[i]] = {};
+
+                // Vérifie si l'élément correspond à un service défini dans 'tarteaucitron.services'
                 if (tarteaucitron.services[arr[i]] !== undefined) {
+
+                    // Ajoute l'élément au tableau de sortie s'il est un service valide
                     out.push(arr[i]);
                 }
             }
         }
 
+        // Trie le tableau de sortie par type et clé de service
         out = out.sort(function (a, b) {
-            if (s[a].type + s[a].key > s[b].type + s[b].key) { return 1; }
-            if (s[a].type + s[a].key < s[b].type + s[b].key) { return -1; }
-            return 0;
+
+            // Compare les éléments par type et clé
+            if (s[a].type + s[a].key > s[b].type + s[b].key) { return 1; } // Si l'élément a est supérieur à l'élément b, retourne 1
+            if (s[a].type + s[a].key < s[b].type + s[b].key) { return -1; } // Si l'élément a est inférieur à l'élément b, retourne -1
+            return 0; // Si les éléments sont égaux, retourne 0
         });
 
+        // Retourne le tableau nettoyé et trié
         return out;
     },
+    // Fonction pour envoyer un consentement, pour un autre type de bouton, 
+    // execute respond sur un id précis
     "setConsent": function (id, status) {
         if (status === true) {
             tarteaucitron.userInterface.respond(document.getElementById(id + 'Allowed'), true);
@@ -1282,28 +1302,42 @@ var tarteaucitron = {
             tarteaucitron.userInterface.respond(document.getElementById(id + 'Denied'), false);
         }
     },
+    // Objets de fonction gérant l'interface
     "userInterface": {
+        // Fonction pour appliquer des styles CSS à un élément spécifié
         "css": function (id, property, value) {
             "use strict";
+
+            // Vérifie si l'élément avec l'ID donné existe dans le document
             if (document.getElementById(id) !== null) {
 
+                // Si la propriété est "display", la valeur est "none" et l'ID correspond à l'un des éléments spécifiques
                 if (property == "display" && value == "none" && (id == "tarteaucitron" || id == "tarteaucitronBack" || id == "tarteaucitronAlertBig")) {
+                    // Définit l'opacité de l'élément à 0 pour une transition en douceur
                     document.getElementById(id).style["opacity"] = "0";
 
-                    /*setTimeout(function() {*/document.getElementById(id).style[property] = value;/*}, 200);*/
-                } else {
-
+                    // Définit la propriété CSS après avoir modifié l'opacité (commenté le délai)
                     document.getElementById(id).style[property] = value;
 
+                } else {
+                    // Applique la propriété CSS directement
+                    document.getElementById(id).style[property] = value;
+
+                    // Si la propriété est "display", la valeur est "block", et l'ID est "tarteaucitron" ou "tarteaucitronAlertBig"
                     if (property == "display" && value == "block" && (id == "tarteaucitron" || id == "tarteaucitronAlertBig")) {
+                        // Définit l'opacité de l'élément à 1 pour le rendre complètement visible
                         document.getElementById(id).style["opacity"] = "1";
                     }
 
+                    // Si la propriété est "display", la valeur est "block", et l'ID est "tarteaucitronBack"
                     if (property == "display" && value == "block" && id == "tarteaucitronBack") {
+                        // Définit l'opacité de l'élément à 0.7 pour un effet semi-transparent
                         document.getElementById(id).style["opacity"] = "0.7";
                     }
 
-                    if (property == "display" && value == "block" && id == "tarteaucitronAlertBig" && (tarteaucitron.parameters.orientation == "middle"|| tarteaucitron.parameters.orientation == "popup")) {
+                    // Si la propriété est "display", la valeur est "block", l'ID est "tarteaucitronAlertBig" et l'orientation est "middle" ou "popup"
+                    if (property == "display" && value == "block" && id == "tarteaucitronAlertBig" && (tarteaucitron.parameters.orientation == "middle" || tarteaucitron.parameters.orientation == "popup")) {
+                        // Appelle la fonction focusTrap pour gérer le focus à l'intérieur de l'élément "tarteaucitronAlertBig"
                         tarteaucitron.userInterface.focusTrap('tarteaucitronAlertBig');
                     }
                 }
@@ -1418,6 +1452,7 @@ var tarteaucitron = {
                 }
             }
         },
+        // Fonction pour mettre a jour le statut d'un service
         "respond": function (el, status) {
             "use strict";
 
@@ -1510,6 +1545,7 @@ var tarteaucitron = {
                 tarteaucitron.sendEvent(key + '_disallowed');
             }
         },
+        // Fonction pour gérer les couleurs et l'état des services dans l'interface utilisateur
         "color": function (key, status) {
             "use strict";
 
@@ -1721,6 +1757,7 @@ var tarteaucitron = {
 
 
         },
+        // Fonction d'ouverture du panel de config
         "openPanel": function () {
             "use strict";
 
@@ -1747,100 +1784,159 @@ var tarteaucitron = {
 
             if (typeof(window.dispatchEvent) === 'function') {window.dispatchEvent(tacOpenPanelEvent);}
         },
+       // Fonction pour fermer le panneau de consentement et gérer l'accessibilité 
+       // et le rechargement de la page si nécessaire
         "closePanel": function () {
             "use strict";
 
+            // Si l'URL actuelle contient le hashtag spécifique de tarteaucitron
             if (document.location.hash === tarteaucitron.hashtag) {
+
+                // Vérifie si l'objet history est disponible pour manipuler l'historique du navigateur
                 if (window.history) {
+
+                    // Remplace l'état de l'historique pour retirer le hashtag sans recharger la page
                     window.history.replaceState('', document.title, window.location.pathname + window.location.search);
                 } else {
+                    // Si history n'est pas disponible, retire le hashtag en modifiant l'URL
                     document.location.hash = '';
                 }
             }
+
+            // Vérifie si l'élément avec l'ID 'tarteaucitron' existe dans le DOM
             if (tarteaucitron.checkIfExist('tarteaucitron')) {
-                // accessibility: manage focus on close panel
+
+                // Accessibilité : gère le focus lors de la fermeture du panneau
                 if (tarteaucitron.checkIfExist('tarteaucitronCloseAlert')) {
+
+                    // Si l'élément 'tarteaucitronCloseAlert' existe, déplace le focus dessus
                     document.getElementById('tarteaucitronCloseAlert').focus();
+
                 } else if (tarteaucitron.checkIfExist('tarteaucitronManager')) {
+
+                    // Sinon, si l'élément 'tarteaucitronManager' existe, déplace le focus dessus
                     document.getElementById('tarteaucitronManager').focus();
                 } else if (tarteaucitron.customCloserId && tarteaucitron.checkIfExist(tarteaucitron.customCloserId)) {
+
+                    // Sinon, si un ID de fermeture personnalisé est défini et existe, déplace le focus dessus
                     document.getElementById(tarteaucitron.customCloserId).focus();
                 }
+
+                // Modifie le style CSS de l'élément 'tarteaucitron' pour le masquer
                 tarteaucitron.userInterface.css('tarteaucitron', 'display', 'none');
             }
 
+            // Vérifie si les éléments 'tarteaucitronCookiesListContainer' et 'tarteaucitronCookiesNumber' existent dans le DOM
             if (tarteaucitron.checkIfExist('tarteaucitronCookiesListContainer') && tarteaucitron.checkIfExist('tarteaucitronCookiesNumber')) {
-                // accessibility: manage focus on close cookies list
-                document.getElementById('tarteaucitronCookiesNumber').focus();
-                document.getElementById('tarteaucitronCookiesNumber').setAttribute("aria-expanded", "false");
-                tarteaucitron.userInterface.css('tarteaucitronCookiesListContainer', 'display', 'none');
+                // Accessibilité : gère le focus lors de la fermeture de la liste des cookies
+                document.getElementById('tarteaucitronCookiesNumber').focus(); // Déplace le focus sur 'tarteaucitronCookiesNumber'
+                document.getElementById('tarteaucitronCookiesNumber').setAttribute("aria-expanded", "false"); // Met à jour l'attribut ARIA pour indiquer que la liste des cookies est fermée
+                tarteaucitron.userInterface.css('tarteaucitronCookiesListContainer', 'display', 'none'); // Masque la liste des cookies
             }
 
+            // Utilise la fonction de rappel pour masquer tous les éléments avec la classe 'tarteaucitronInfoBox'
             tarteaucitron.fallback(['tarteaucitronInfoBox'], function (elem) {
-                elem.style.display = 'none';
+                elem.style.display = 'none'; // Masque chaque élément
             }, true);
 
+            // Vérifie si la page doit être rechargée en fonction des actions de l'utilisateur
             if (tarteaucitron.reloadThePage === true) {
-                window.location.reload();
+                window.location.reload(); // Recharge la page si nécessaire
             } else {
+                // Si le rechargement de la page n'est pas nécessaire, masque l'élément 'tarteaucitronBack'
                 tarteaucitron.userInterface.css('tarteaucitronBack', 'display', 'none');
             }
+
+            // Supprime la classe 'tarteaucitron-modal-open' du body si elle est présente
             if (document.getElementsByTagName('body')[0].classList !== undefined) {
                 document.getElementsByTagName('body')[0].classList.remove('tarteaucitron-modal-open');
             }
 
-            //ie compatibility
+            // Compatibilité avec Internet Explorer pour créer et déclencher un événement personnalisé
+            /*
             var tacClosePanelEvent;
-            if(typeof(Event) === 'function') {
+            if (typeof(Event) === 'function') {
+                // Crée un nouvel événement si le constructeur 'Event' est supporté
                 tacClosePanelEvent = new Event("tac.close_panel");
-            }else if (typeof(document.createEvent) === 'function'){
+            } else if (typeof(document.createEvent) === 'function') {
+                // Crée un événement pour les navigateurs plus anciens
                 tacClosePanelEvent = document.createEvent('Event');
                 tacClosePanelEvent.initEvent("tac.close_panel", true, true);
-            }
-            //end ie compatibility
+            }*/
 
-            if (typeof(window.dispatchEvent) === 'function') {window.dispatchEvent(tacClosePanelEvent);}
+             // Crée un nouvel événement si le constructeur 'Event' est supporté
+             let tacClosePanelEvent = new Event("tac.close_panel");
+
+            // Déclenche l'événement 'tac.close_panel' si la méthode 'dispatchEvent' est supportée
+            /*if (typeof(window.dispatchEvent) === 'function') {
+                window.dispatchEvent(tacClosePanelEvent);
+            }*/
+
+            // Déclenche l'événement 'tac.close_panel'
+            window.dispatchEvent(tacClosePanelEvent);
         },
+        // Fonction pour créer un piège à focus, empêchant le focus de sortir 
+        // d'un élément parent spécifique
         "focusTrap": function(parentElement) {
-            "use strict";
+            "use strict"; 
 
+            // Contiendra tous les éléments focusables dans le parent
             var focusableEls,
+                // Premier élément focusable
                 firstFocusableEl,
+                // Dernier élément focusable
                 lastFocusableEl,
+                // Liste des éléments focusables visibles
                 filtered;
 
+            // Sélectionne tous les liens et boutons focusables dans l'élément parent spécifié par l'ID `parentElement`
+            // c'est à dire les liens et les boutons
             focusableEls = document.getElementById(parentElement).querySelectorAll('a[href], button');
-            filtered = [];
 
-            // get only visible items
+            filtered = []; // Initialise un tableau vide pour stocker les éléments visibles
+
+            // Boucle pour filtrer les éléments focusables visibles
             for (var i = 0, max = focusableEls.length; i < max; i++) {
+
+                // Vérifie si l'élément est visible en s'assurant que sa hauteur est supérieure à 0
                 if (focusableEls[i].offsetHeight > 0) {
-                   filtered.push(focusableEls[i]);
+
+                    // Ajoute l'élément à la liste des éléments visibles    
+                    filtered.push(focusableEls[i]);
                 }
             }
 
-            firstFocusableEl = filtered[0];
-            lastFocusableEl = filtered[filtered.length - 1];
+            // Détermine le premier et le dernier élément focusable visible
+            firstFocusableEl = filtered[0]; // Premier élément focusable visible
+            lastFocusableEl = filtered[filtered.length - 1]; // Dernier élément focusable visible
 
-            //loop focus inside tarteaucitron
+            // Ajoute un écouteur d'événements "keydown" à l'élément parent pour gérer le piège à focus
             document.getElementById(parentElement).addEventListener("keydown", function (evt) {
 
-                if ( evt.key === 'Tab' || evt.keyCode === 9 ) {
+                // Vérifie si la touche pressée est la touche Tabulation
+                if (evt.key === 'Tab' || evt.keyCode === 9) {
+                    
+                    // Si la touche Shift est également enfoncée (Shift + Tab)
+                    if (evt.shiftKey) {
 
-                    if ( evt.shiftKey ) /* shift + tab */ {
+                        // Si l'élément actif est le premier élément focusable visible, 
+                        // déplacer le focus sur le dernier élément
                         if (document.activeElement === firstFocusableEl) {
-                            lastFocusableEl.focus();
-                            evt.preventDefault();
+                            lastFocusableEl.focus(); // Déplace le focus sur le dernier élément focusable visible
+                            evt.preventDefault(); // Empêche le comportement par défaut de la touche Tab
                         }
-                    } else /* tab */ {
+                    } else {
+                        // Si seule la touche Tab est enfoncée
+                        // Si l'élément actif est le dernier élément focusable visible, déplacer le focus sur le premier élément
                         if (document.activeElement === lastFocusableEl) {
-                            firstFocusableEl.focus();
-                            evt.preventDefault();
+                            firstFocusableEl.focus(); // Déplace le focus sur le premier élément focusable visible
+                            evt.preventDefault(); // Empêche le comportement par défaut de la touche Tab
                         }
                     }
                 }
-            })
+            });
         },
+        // Fonction pour rendre visible la première popup
         "openAlert": function () {
             "use strict";
             var c = 'tarteaucitron';
@@ -1866,9 +1962,12 @@ var tarteaucitron = {
 
             if (typeof(window.dispatchEvent) === 'function') {window.dispatchEvent(tacOpenAlertEvent);}
         },
+        // Fonction pour masquer la première popup
         "closeAlert": function () {
             "use strict";
             var c = 'tarteaucitron';
+
+            // masquer l'alert (première popup, ainsi que les différents éléments reliés)
             tarteaucitron.userInterface.css(c + 'Percentage', 'display', 'none');
             tarteaucitron.userInterface.css(c + 'AlertSmall', 'display', 'block');
             tarteaucitron.userInterface.css(c + 'Icon', 'display', 'block');
@@ -1877,17 +1976,22 @@ var tarteaucitron = {
             tarteaucitron.userInterface.jsSizing('box');
 
             //ie compatibility
-            var tacCloseAlertEvent;
+            /* var tacCloseAlertEvent;
             if(typeof(Event) === 'function') {
                 tacCloseAlertEvent = new Event("tac.close_alert");
             }else if (typeof(document.createEvent) === 'function'){
                 tacCloseAlertEvent = document.createEvent('Event');
                 tacCloseAlertEvent.initEvent("tac.close_alert", true, true);
-            }
+            } */
             //end ie compatibility
 
-            if (typeof(window.dispatchEvent) === 'function') {window.dispatchEvent(tacCloseAlertEvent);}
+            let tacCloseAlertEvent = new Event("tac.close_alert");
+
+            window.dispatchEvent(tacCloseAlertEvent);
+
+            /*if (typeof(window.dispatchEvent) === 'function') {window.dispatchEvent(tacCloseAlertEvent);} */
         },
+        // Fonction pour toggle les cookies (UI)
         "toggleCookiesList": function () {
             "use strict";
             var div = document.getElementById('tarteaucitronCookiesListContainer'),
@@ -1914,6 +2018,7 @@ var tarteaucitron = {
                 tarteaucitron.userInterface.css('tarteaucitronBack', 'display', 'none');
             }
         },
+        // Fonction pour toggle un élément (par id ou class)
         "toggle": function (id, closeClass) {
             "use strict";
             var div = document.getElementById(id);
@@ -1936,27 +2041,39 @@ var tarteaucitron = {
                 div.style.display = 'none';
             }
         },
+        // Fonction pour trier les enfants d'un élément parent par ordre alphabétique basé sur le nom du service (id)
         "order": function (id) {
             "use strict";
-            var main = document.getElementById('tarteaucitronServices_' + id),
-                allDivs,
-                store = [],
-                i;
 
+            // Récupère l'élément parent basé sur l'ID fourni
+            var main = document.getElementById('tarteaucitronServices_' + id),
+                allDivs, // Variable pour stocker tous les enfants de l'élément parent
+                store = [], // Tableau temporaire pour stocker les éléments pendant le tri
+                i; // Index pour les boucles
+
+            // Si l'élément parent n'existe pas, quitter la fonction
             if (main === null) {
                 return;
             }
 
+            // Récupère tous les nœuds enfants de l'élément parent
             allDivs = main.childNodes;
 
+            // Vérifie si la méthode 'map' est disponible sur les tableaux et que 'Enumerable' n'est pas défini
             if (typeof Array.prototype.map === 'function' && typeof Enumerable === 'undefined') {
+
+                // Utilise 'Array.prototype.map' pour convertir les enfants en objets et les trier
                 Array.prototype.map.call(main.children, Object).sort(function (a, b) {
-                //var mainChildren = Array.from(main.children);
-                //mainChildren.sort(function (a, b) {
-                    if (tarteaucitron.services[a.id.replace(/Line/g, '')].name > tarteaucitron.services[b.id.replace(/Line/g, '')].name) { return 1; }
-                    if (tarteaucitron.services[a.id.replace(/Line/g, '')].name < tarteaucitron.services[b.id.replace(/Line/g, '')].name) { return -1; }
-                    return 0;
+                    // Comparaison alphabétique basée sur le nom des services
+                    if (tarteaucitron.services[a.id.replace(/Line/g, '')].name > tarteaucitron.services[b.id.replace(/Line/g, '')].name) {
+                        return 1; // Retourne 1 si le nom du service de 'a' est supérieur à celui de 'b'
+                    }
+                    if (tarteaucitron.services[a.id.replace(/Line/g, '')].name < tarteaucitron.services[b.id.replace(/Line/g, '')].name) {
+                        return -1; // Retourne -1 si le nom du service de 'a' est inférieur à celui de 'b'
+                    }
+                    return 0; // Retourne 0 si les noms des services sont identiques
                 }).forEach(function (element) {
+                    // Pour chaque élément trié, l'ajoute à la fin de l'élément parent
                     main.appendChild(element);
                 });
             }
@@ -2595,24 +2712,44 @@ var tarteaucitron = {
             }
         }
     },
+    // Fonction pour effectuer une action de repli sur des éléments ayant une ou plusieurs classes spécifiques
     "fallback": function (matchClass, content, noInner) {
         "use strict";
+
+        // Récupère tous les éléments de la page
         var elems = document.getElementsByTagName('*'),
+            // Variable pour parcourir les éléments
             i,
+            // Compteur pour les classes
             index = 0;
 
+        // Boucle à travers tous les éléments trouvés sur la page
         for (i in elems) {
+
+            // Vérifie si l'élément est défini
             if (elems[i] !== undefined) {
+
+                // Boucle à travers toutes les classes à rechercher
                 for (index = 0; index < matchClass.length; index += 1) {
-                    if ((' ' + elems[i].className + ' ')
-                            .indexOf(' ' + matchClass[index] + ' ') > -1) {
+
+                    // Vérifie si l'élément contient la classe spécifiée
+                    if ((' ' + elems[i].className + ' ').indexOf(' ' + matchClass[index] + ' ') > -1) {
+
+                        // Si 'content' est une fonction, exécute-la
                         if (typeof content === 'function') {
+
+                            // Si 'noInner' est à true, exécute la fonction 'content' sans modifier 'innerHTML'
                             if (noInner === true) {
+
+                                // Appelle la fonction avec l'élément comme argument
                                 content(elems[i]);
                             } else {
+
+                                // Sinon, définit 'innerHTML' de l'élément en appelant la fonction 'content'
                                 elems[i].innerHTML = content(elems[i]);
                             }
                         } else {
+                            // Si 'content' n'est pas une fonction, définit directement 'innerHTML' de l'élément
                             elems[i].innerHTML = content;
                         }
                     }
