@@ -879,6 +879,8 @@ var tarteaucitron = {
                         }
                     }, 1500);
                 }
+
+                // Ajout d'une croix pour fermer la popup (UI rule)
                 if(tarteaucitron.parameters.closePopup === true){
                     setTimeout(function() {
                         var closeElement = document.getElementById('tarteaucitronAlertBig'),
@@ -902,58 +904,64 @@ var tarteaucitron = {
                     // ajout du custom style dans le head
                     document.head.appendChild(tac_group_style);
 
-                    // chercher tous les services
-                    var cats = document.querySelectorAll('[id^="tarteaucitronServicesTitle_"]')
+                    // ajout d'un setInterval, cats étant vide dans la dernière version de tarteaucitron
+                    let checkExist = setInterval(function() {
+                        // cherche tous les services
+                        let cats = document.querySelectorAll('[id^="tarteaucitronServicesTitle_"]');
 
-
-                    console.log('on est la');
-                    console.log('cats', cats);
-
-            
-
-                    Array.prototype.forEach.call(cats, function(item) {
+                        if (cats.length > 0) {
+                            Array.prototype.forEach.call(cats, function(item) {
                  
-                        var cat = item.getAttribute('id').replace(/^(tarteaucitronServicesTitle_)/, "");
-                        if (cat !== "mandatory") {
-                            var html = '';
-                            html += '<li  class="tarteaucitronLine">';
-                            html += '   <div class="tarteaucitronName">';
-                            html += '       <span class="tarteaucitronH3" role="heading" aria-level="2">'+tarteaucitron.lang[cat].title+'</span>';
-                            html += '       <span>'+tarteaucitron.lang[cat].details+'</span>';
-                            html += '   <button type="button" aria-expanded="false" class="tarteaucitron-toggle-group" id="tarteaucitron-toggle-group-'+cat+'">'+tarteaucitron.lang.alertSmall+' ('+document.getElementById("tarteaucitronServices_"+cat).childElementCount+')</button>';
-                            html += '   </div>';
-                            html += '   <div class="tarteaucitronAsk" id="tarteaucitron-group-'+cat+'">';
-                            html += '       <button type="button" aria-label="' + tarteaucitron.lang.allow + ' ' + tarteaucitron.lang[cat].title + '" class="tarteaucitronAllow" id="tarteaucitron-accept-group-'+cat+'">';
-                            html += '           <span class="tarteaucitronCheck" aria-hidden="true"></span> ' + tarteaucitron.lang.allow;
-                            html += '       </button> ';
-                            html += '       <button type="button" aria-label="' + tarteaucitron.lang.deny + ' ' + tarteaucitron.lang[cat].title + '" class="tarteaucitronDeny" id="tarteaucitron-reject-group-'+cat+'">';
-                            html += '           <span class="tarteaucitronCross" aria-hidden="true"></span> ' + tarteaucitron.lang.deny;
-                            html += '       </button>';
-                            html += '   </div>';
-                            html += '</li>';
-                            var ul = document.createElement('ul');
-                            ul.innerHTML = html;
-                            item.insertBefore(ul, item.querySelector('#tarteaucitronServices_'+cat+''));
-                            document.querySelector('#tarteaucitronServices_' + cat).style.display = 'none';
-                            tarteaucitron.addClickEventToId("tarteaucitron-toggle-group-" + cat, function () {
-                                tarteaucitron.userInterface.toggle('tarteaucitronServices_' + cat);
-                               if (document.getElementById('tarteaucitronServices_' + cat).style.display == 'block') {
-                                    tarteaucitron.userInterface.addClass('tarteaucitronServicesTitle_' + cat, 'tarteaucitronIsExpanded');
-                                    document.getElementById('tarteaucitron-toggle-group-'+cat).setAttribute('aria-expanded', 'true');
-                                } else {
-                                    tarteaucitron.userInterface.removeClass('tarteaucitronServicesTitle_' + cat, 'tarteaucitronIsExpanded');
-                                    document.getElementById('tarteaucitron-toggle-group-'+cat).setAttribute('aria-expanded', 'false');
+                                var cat = item.getAttribute('id').replace(/^(tarteaucitronServicesTitle_)/, "");
+
+                                // si la catégorie de services n'est pas "mandatory"
+                                if (cat !== "mandatory") {
+                                    var html = '';
+                                    html += '<li  class="tarteaucitronLine">';
+                                    html += '   <div class="tarteaucitronName">';
+                                    html += '       <span class="tarteaucitronH3" role="heading" aria-level="2">'+tarteaucitron.lang[cat].title+'</span>';
+                                    html += '       <span>'+tarteaucitron.lang[cat].details+'</span>';
+                                    html += '   <button type="button" aria-expanded="false" class="tarteaucitron-toggle-group" id="tarteaucitron-toggle-group-'+cat+'">'+tarteaucitron.lang.alertSmall+' ('+document.getElementById("tarteaucitronServices_"+cat).childElementCount+')</button>';
+                                    html += '   </div>';
+                                    html += '   <div class="tarteaucitronAsk" id="tarteaucitron-group-'+cat+'">';
+                                    html += '       <button type="button" aria-label="' + tarteaucitron.lang.allow + ' ' + tarteaucitron.lang[cat].title + '" class="tarteaucitronAllow" id="tarteaucitron-accept-group-'+cat+'">';
+                                    html += '           <span class="tarteaucitronCheck" aria-hidden="true"></span> ' + tarteaucitron.lang.allow;
+                                    html += '       </button> ';
+                                    html += '       <button type="button" aria-label="' + tarteaucitron.lang.deny + ' ' + tarteaucitron.lang[cat].title + '" class="tarteaucitronDeny" id="tarteaucitron-reject-group-'+cat+'">';
+                                    html += '           <span class="tarteaucitronCross" aria-hidden="true"></span> ' + tarteaucitron.lang.deny;
+                                    html += '       </button>';
+                                    html += '   </div>';
+                                    html += '</li>';
+                                    var ul = document.createElement('ul');
+                                    ul.innerHTML = html;
+                                    item.insertBefore(ul, item.querySelector('#tarteaucitronServices_'+cat+''));
+                                    document.querySelector('#tarteaucitronServices_' + cat).style.display = 'none';
+                                    tarteaucitron.addClickEventToId("tarteaucitron-toggle-group-" + cat, function () {
+                                        tarteaucitron.userInterface.toggle('tarteaucitronServices_' + cat);
+                                       if (document.getElementById('tarteaucitronServices_' + cat).style.display == 'block') {
+                                            tarteaucitron.userInterface.addClass('tarteaucitronServicesTitle_' + cat, 'tarteaucitronIsExpanded');
+                                            document.getElementById('tarteaucitron-toggle-group-'+cat).setAttribute('aria-expanded', 'true');
+                                        } else {
+                                            tarteaucitron.userInterface.removeClass('tarteaucitronServicesTitle_' + cat, 'tarteaucitronIsExpanded');
+                                            document.getElementById('tarteaucitron-toggle-group-'+cat).setAttribute('aria-expanded', 'false');
+                                        }
+                                        //tarteaucitron.initEvents.resizeEvent();
+                                    });
+
+                                    // Ajout d'évènement pour accepter un groupe entier
+
+                                    tarteaucitron.addClickEventToId("tarteaucitron-accept-group-" + cat, function () {
+                                        tarteaucitron.userInterface.respondAll(true, cat);
+                                    });
+                                    tarteaucitron.addClickEventToId("tarteaucitron-reject-group-" + cat, function () {
+                                        tarteaucitron.userInterface.respondAll(false, cat);
+                                    });
                                 }
-                                //tarteaucitron.initEvents.resizeEvent();
                             });
-                            tarteaucitron.addClickEventToId("tarteaucitron-accept-group-" + cat, function () {
-                                tarteaucitron.userInterface.respondAll(true, cat);
-                            });
-                            tarteaucitron.addClickEventToId("tarteaucitron-reject-group-" + cat, function () {
-                                tarteaucitron.userInterface.respondAll(false, cat);
-                            });
+
+                            clearInterval(checkExist); // Arrête l'intervalle lorsque les éléments sont trouvés
                         }
-                    });
+                    }, 500);
                 }
 
                 // add info about the services on the main banner
@@ -1301,12 +1309,14 @@ var tarteaucitron = {
                 }
             }
         },
+        // fonction pour ajouter une classe d'un élément ciblé par son id
         "addClass": function (id, className) {
             "use strict";
             if (document.getElementById(id) !== null && document.getElementById(id).classList !== undefined) {
                 document.getElementById(id).classList.add(className);
             }
         },
+        // fonction pour supprimer une classe d'un élément ciblé par son id
         "removeClass": function (id, className) {
             "use strict";
             if (document.getElementById(id) !== null && document.getElementById(id).classList !== undefined) {
@@ -1614,6 +1624,8 @@ var tarteaucitron = {
                 // Si tous les services de la catégorie sont acceptés
                 if (total === groupallowed) {
 
+                    // Si les services sont en mode groupés
+
                     // Met à jour l'interface utilisateur pour indiquer que tous les services de la catégorie sont acceptés
                     tarteaucitron.userInterface.removeClass('tarteaucitron-group-' + cat, 'tarteaucitronIsDenied');
                     tarteaucitron.userInterface.addClass('tarteaucitron-group-' + cat, 'tarteaucitronIsAllowed');
@@ -1627,6 +1639,9 @@ var tarteaucitron = {
 
                 // Si tous les services de la catégorie sont refusés
                 if (total === groupdenied) {
+
+                    // Si les services sont en mode groupés
+
                     // Met à jour l'interface utilisateur pour indiquer que tous les services de la catégorie sont refusés
                     tarteaucitron.userInterface.addClass('tarteaucitron-group-' + cat, 'tarteaucitronIsDenied');
                     tarteaucitron.userInterface.removeClass('tarteaucitron-group-' + cat, 'tarteaucitronIsAllowed');
@@ -1640,6 +1655,9 @@ var tarteaucitron = {
 
                 // Si tous les services ne sont ni tous acceptés ni tous refusés
                 if (total !== groupdenied && total !== groupallowed) {
+
+                    // Si les services sont en mode groupés
+
                     // Met à jour l'interface utilisateur pour indiquer un état indéterminé (ni tout accepté ni tout refusé)
                     tarteaucitron.userInterface.removeClass('tarteaucitron-group-' + cat, 'tarteaucitronIsDenied');
                     tarteaucitron.userInterface.removeClass('tarteaucitron-group-' + cat, 'tarteaucitronIsAllowed');
