@@ -103,7 +103,7 @@ button.tarteaucitron-toggle-group {
 
 /* hide info about cookies number */
 #tarteaucitronRoot .tarteaucitronStatusInfo {
-    display: none;
+    /* display: none; */
 }
 
 #tarteaucitronRoot .tarteaucitronName {

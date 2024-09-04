@@ -1323,52 +1323,97 @@ var tarteaucitron = {
                 document.getElementById(id).classList.remove(className);
             }
         },
+        // Fonction pour mettre à jour le statut de tous les services
         "respondAll": function (status, type, allowSafeAnalytics) {
             "use strict";
-            var s = tarteaucitron.services,
-                service,
-                key,
-                index = 0;
 
+            // Variables pour stocker les services et les informations associées
+            var s = tarteaucitron.services, // Obtenir tous les services configurés
+
+                // Variable pour stocker temporairement chaque service
+                service,
+
+                 // Clé d'identification de chaque service
+                key,
+
+                // Compteur pour la boucle
+                index = 0; 
+
+            // Boucle à travers tous les services listés dans 'tarteaucitron.job'
             for (index = 0; index < tarteaucitron.job.length; index += 1) {
 
+                // Si un type de service spécifique est défini (pour activer une catégorie) 
+                // et ne correspond pas au type actuel, passer au suivant
                 if (typeof type !== 'undefined' && type !== '' && s[tarteaucitron.job[index]].type !== type) {
-                    continue;
+                    continue; // Continue à la prochaine itération de la boucle
                 }
 
+                // Si 'allowSafeAnalytics' est vrai et le service actuel est marqué comme 'safeanalytic', passer au suivant
+                // allowSafeAnalytics n'est pas documenté, apparemment pas utile, car il est false pour un seul service déclaré
                 if (allowSafeAnalytics && typeof s[tarteaucitron.job[index]].safeanalytic !== "undefined" && s[tarteaucitron.job[index]].safeanalytic === true) {
-                    continue;
+                    continue; // Continue à la prochaine itération de la boucle
                 }
 
-                service = s[tarteaucitron.job[index]];
-                key = service.key;
+                // Récupère le service actuel et sa clé
+                service = s[tarteaucitron.job[index]]; // Récupérer le service courant
+
+                // Obtenir la clé unique du service
+                key = service.key; 
+
+                // Vérifie si l'état du service doit être mis à jour
                 if (tarteaucitron.state[key] !== status) {
+
+                    // Si le service est déjà lancé et que le nouveau statut est 'false', marquer la page pour rechargement
                     if (status === false && tarteaucitron.launch[key] === true) {
+
+                        // Indique qu'une actualisation de la page est nécessaire
                         tarteaucitron.reloadThePage = true;
+
+                        // Met à jour les attributs ARIA et le titre du bouton de fermeture pour indiquer que la page sera rechargée
                         if (tarteaucitron.checkIfExist('tarteaucitronClosePanel')) {
                             var ariaCloseValue = document.getElementById('tarteaucitronClosePanel').textContent.trim() + ' (' + tarteaucitron.lang.reload + ')';
                             document.getElementById('tarteaucitronClosePanel').setAttribute("aria-label", ariaCloseValue);
                             document.getElementById('tarteaucitronClosePanel').setAttribute("title", ariaCloseValue);
                         }
                     }
+
+                    // Si le service n'a pas encore été lancé et que le nouveau statut est 'true', lancer le service
                     if (tarteaucitron.launch[key] !== true && status === true) {
 
-                        // tarteaucitron.pro('!' + key + '=engage');
-
+                        // Marque le service comme lancé
                         tarteaucitron.launch[key] = true;
-                        if (typeof tarteaucitronMagic === 'undefined' || tarteaucitronMagic.indexOf("_" + key + "_") < 0) { tarteaucitron.services[key].js(); }
+
+                        // Si 'tarteaucitronMagic' n'est pas défini, objet premium non utile
+                        /* if (typeof tarteaucitronMagic === 'undefined' || tarteaucitronMagic.indexOf("_" + key + "_") < 0) {
+                            tarteaucitron.services[key].js(); // Exécute la fonction JavaScript associée au service
+                        } */
+
+                        // éxecuter le service
+                        tarteaucitron.services[key].js();
+
+                        // Envoie un événement indiquant que le service a été chargé
                         tarteaucitron.sendEvent(key + '_loaded');
                     }
-                    var itemStatusElem = document.getElementById('tacCurrentStatus'+key);
+
+                    // Récupère l'élément HTML pour afficher le statut actuel du service
+                    var itemStatusElem = document.getElementById('tacCurrentStatus' + key);
+
+                    // Met à jour l'état du service dans l'objet 'tarteaucitron' -> state
                     tarteaucitron.state[key] = status;
+
+                    // Crée ou met à jour le cookie associé au service avec le nouveau statut
                     tarteaucitron.cookie.create(key, status);
+
+                    // Met à jour l'interface utilisateur pour refléter le nouveau statut du service
                     tarteaucitron.userInterface.color(key, status);
+
+                    // Met à jour le texte de l'élément HTML avec le statut actuel du service et envoie un événement
                     if (status == true) {
-                        itemStatusElem.innerHTML = tarteaucitron.lang.allowed;
-                        tarteaucitron.sendEvent(key + '_allowed');
+                        itemStatusElem.innerHTML = tarteaucitron.lang.allowed; // Met à jour le texte pour indiquer que le service est autorisé
+                        tarteaucitron.sendEvent(key + '_allowed'); // Envoie un événement indiquant que le service est autorisé
                     } else {
-                        itemStatusElem.innerHTML = tarteaucitron.lang.disallowed;
-                        tarteaucitron.sendEvent(key + '_disallowed');
+                        itemStatusElem.innerHTML = tarteaucitron.lang.disallowed; // Met à jour le texte pour indiquer que le service est refusé
+                        tarteaucitron.sendEvent(key + '_disallowed'); // Envoie un événement indiquant que le service est refusé
                     }
                 }
             }
