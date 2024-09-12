@@ -5072,9 +5072,14 @@ tarteaucitron.services.youtube = {
     "uri": "https://policies.google.com/privacy",
     "needConsent": true,
     "cookies": ['VISITOR_INFO1_LIVE', 'YSC', 'PREF', 'GEUP'],
+    // fonction à l'acception du service
     "js": function () {
         "use strict";
+
+        // si accepté, exécution du service, donc dans ce cas, création des iframes 
+        // pour tous les youtube_player
         tarteaucitron.fallback(['youtube_player'], function (x) {
+
             var frame_title = tarteaucitron.getElemAttr(x, "title") || 'Youtube iframe',
                 video_id = tarteaucitron.getElemAttr(x, "videoID"),
                 srcdoc = tarteaucitron.getElemAttr(x, "srcdoc"),
@@ -5128,12 +5133,15 @@ tarteaucitron.services.youtube = {
             return video_frame;
         });
     },
+    // fonction de replis
     "fallback": function () {
         "use strict";
         var id = 'youtube';
         tarteaucitron.fallback(['youtube_player'], function (elem) {
             elem.style.width = tarteaucitron.getElemAttr(elem,'width') + 'px';
             elem.style.height = tarteaucitron.getElemAttr(elem,'height') + 'px';
+
+            // affichage du message pour activer les iframes
             return tarteaucitron.engage(id);
         });
     }

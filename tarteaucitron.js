@@ -755,98 +755,111 @@ var tarteaucitron = {
                     html += '</div>';
                 }
 
-                tarteaucitron
-                    .addInternalScript(tarteaucitron.cdn + 'advertising' + (useMinifiedJS ? '.min' : '') + '.js', '', 
-                    function () {
-                    // si ce fichier est chargé, c'est qu'Ad blocker premium n'est pas actif, donc mise à jour de cette variable
+              // Charger le script 'advertising' depuis le CDN de tarteaucitron
+                tarteaucitron.addInternalScript(tarteaucitron.cdn + 'advertising' + (useMinifiedJS ? '.min' : '') + '.js', '', 
+                function () {
+                    // Si ce fichier est chargé, cela signifie que l'Ad Blocker premium n'est pas actif ou que l'option adblocker est désactivée dans les paramètres
                     if (tarteaucitronNoAdBlocker === true || tarteaucitron.parameters.adblocker === false) {
 
+                        // Définir l'ID de l'élément principal `div` à 'tarteaucitronRoot'
                         div.id = 'tarteaucitronRoot';
+
+                        // Si la position du contenu doit être au début du body
                         if (tarteaucitron.parameters.bodyPosition === 'top') {
-                            // Prepend tarteaucitron: #tarteaucitronRoot first-child of the body for better accessibility
+                            // Préfixer `tarteaucitronRoot` en tant que premier enfant du body pour une meilleure accessibilité
                             var bodyFirstChild = body.firstChild;
                             body.insertBefore(div, bodyFirstChild);
-                        }
-                        else {
-                            // Append tarteaucitron: #tarteaucitronRoot last-child of the body
+                        } else {
+                            // Sinon, ajouter `tarteaucitronRoot` en tant que dernier enfant du body
                             body.appendChild(div, body);
                         }
 
-                        div.setAttribute('data-nosnippet', 'true');
-                        div.setAttribute('lang', language);
-                        div.setAttribute('role', 'region');
-                        div.setAttribute('aria-labelledby', 'tac_title');
+                        // Ajouter des attributs supplémentaires pour la confidentialité et l'accessibilité
+                        div.setAttribute('data-nosnippet', 'true'); // Empêche l'indexation par les moteurs de recherche
+                        div.setAttribute('lang', language); // Définit la langue de l'élément selon les paramètres
+                        div.setAttribute('role', 'region'); // Déclare le rôle de région pour une meilleure accessibilité
+                        div.setAttribute('aria-labelledby', 'tac_title'); // Lier le titre de la région à l'élément avec l'ID 'tac_title'
 
+                        // Ajouter le contenu HTML à l'intérieur du div
                         div.innerHTML = html;
 
-                        //ie compatibility
+                        // Compatibilité IE pour créer un événement personnalisé
                         var tacRootAvailableEvent;
-                        if(typeof(Event) === 'function') {
+                        if (typeof(Event) === 'function') {
                             tacRootAvailableEvent = new Event("tac.root_available");
-                        }else if (typeof(document.createEvent) === 'function'){
+                        } else if (typeof(document.createEvent) === 'function') {
                             tacRootAvailableEvent = document.createEvent('Event');
                             tacRootAvailableEvent.initEvent("tac.root_available", true, true);
                         }
-                        //end ie compatibility
 
-                        if (typeof(window.dispatchEvent) === 'function') {window.dispatchEvent(tacRootAvailableEvent);}
+                        // Fin de la compatibilité IE
 
+                        // Si l'objet window prend en charge dispatchEvent, déclencher l'événement personnalisé
+                        if (typeof(window.dispatchEvent) === 'function') {
+                            window.dispatchEvent(tacRootAvailableEvent);
+                        }
+
+                        // Si des tâches (services) sont définies, on les nettoie et les initialise
                         if (tarteaucitron.job !== undefined) {
                             tarteaucitron.job = tarteaucitron.cleanArray(tarteaucitron.job);
+
                             for (index = 0; index < tarteaucitron.job.length; index += 1) {
+
+                                // Ajouter chaque service de la liste des tâches
                                 tarteaucitron.addService(tarteaucitron.job[index]);
                             }
                         } else {
+                            // Si aucune tâche n'est définie, on initialise une liste vide
                             tarteaucitron.job = [];
                         }
 
+                        // Si aucune tâche n'est à exécuter, fermer l'alerte d'acceptation
                         if (tarteaucitron.job.length === 0) {
                             tarteaucitron.userInterface.closeAlert();
                         }
 
+                        // Marquer que le chargement est effectué via AJAX
                         tarteaucitron.isAjax = true;
 
-                        // méthode push, avec pour paramètre le nom du services
+                        // Remplacer la méthode `push` par une fonction personnalisée pour ajouter un service dans tarteaucitron.job
                         tarteaucitron.job.push = function (id) {
 
-                            // ie <9 hack, pas utile
-                            /* if (typeof tarteaucitron.job.indexOf === 'undefined') {
-                                tarteaucitron.job.indexOf = function (obj, start) {
-                                    var i,
-                                        j = this.length;
-                                    for (i = (start || 0); i < j; i += 1) {
-                                        if (this[i] === obj) { return i; }
-                                    }
-                                    return -1;
-                                };
-                            } */
-
-                            // si le service n'existe pas, ajout
+                            // Si le service n'est pas déjà dans la liste, l'ajouter
                             if (tarteaucitron.job.indexOf(id) === -1) {
+
+                                // Utiliser la méthode push classique
                                 Array.prototype.push.call(this, id);
                             }
 
-
+                            // Marquer le service comme non lancé
                             tarteaucitron.launch[id] = false;
+
+                            // Ajouter le service
                             tarteaucitron.addService(id);
                         };
 
+                        // Si l'URL contient le hashtag défini, ouvrir automatiquement le panneau de gestion des cookies
                         if (document.location.hash === tarteaucitron.hashtag && tarteaucitron.hashtag !== '') {
                             tarteaucitron.userInterface.openPanel();
                         }
 
+                        // Mettre à jour le nombre de cookies affiché
                         tarteaucitron.cookie.number();
+
+                        // Mettre à jour toutes les minutes
                         setInterval(tarteaucitron.cookie.number, 60000);
                     }
-                }, tarteaucitron.parameters.adblocker);
+                }, 
+                tarteaucitron.parameters.adblocker // Paramètre pour activer ou désactiver le support de l'adblocker
+                );
 
                 // Show a Warning if an adblocker is detected
                 if (tarteaucitron.parameters.adblocker === true) {
-                    console.log('on en est la')
+        
                     setTimeout(function () {
-                        console.log('tarteaucitronNoAdBlocker', tarteaucitronNoAdBlocker)
+            
                         if (tarteaucitronNoAdBlocker === false) {
-                            console.log('et ici ?')
+               
                             html = '<div id="tarteaucitronAlertBig" class="tarteaucitronAlertBig' + orientation + ' tarteaucitron-display-block" role="alert" aria-live="polite">';
                             html += '   <p id="tarteaucitronDisclaimerAlert">';
                             html += '       ' + tarteaucitron.lang.adblock + '<br/>';
@@ -860,6 +873,7 @@ var tarteaucitron = {
                             html += '<div id="tarteaucitronPremium"></div>';
 
                             div.id = 'tarteaucitronRoot';
+
                             if (tarteaucitron.parameters.bodyPosition === 'top') {
                                 // Prepend tarteaucitron: #tarteaucitronRoot first-child of the body for better accessibility
                                 var bodyFirstChild = body.firstChild;
@@ -895,6 +909,7 @@ var tarteaucitron = {
 
                 // grouper les services par catégorie
                 if(tarteaucitron.parameters.groupServices === true) {
+
                     // création d'un élément html style
                     var tac_group_style = document.createElement('style');
 
@@ -1103,32 +1118,62 @@ var tarteaucitron = {
     // Fonction pour ajouter un service de cookies
     "addService": function (serviceId) {
         "use strict";
-        var html = '',
-            s = tarteaucitron.services,
-            service = s[serviceId];
 
+        var html = '', // Initialisation de la variable html qui contiendra le code HTML généré
+            s = tarteaucitron.services, // Récupération des services disponibles
+            service = s[serviceId]; // Obtention du service à partir de l'ID fourni
+
+        // Si le consentement est toujours nécessaire
         if (tarteaucitron.parameters.alwaysNeedConsent === true) {
+        
+            // Indique que le service a besoin du consentement de l'utilisateur
             service.needConsent = true;
         }
 
+        // Variables pour gérer l'état du service (cookies, navigation, autorisation, etc.)
+        // Lecture des cookies existants
         var cookie = tarteaucitron.cookie.read(),
+
+            // Récupère le nom d'hôte actuel
             hostname = document.location.hostname,
+
+            // Récupère le nom d'hôte du référent
             hostRef = document.referrer.split('/')[2],
+
+            // Vérifie si l'utilisateur navigue sur le même domaine
             isNavigating = (hostRef === hostname && window.location.href !== tarteaucitron.parameters.privacyUrl),
+
+            // Vérifie si le service peut démarrer sans consentement
             isAutostart = (!service.needConsent),
+
+            // Vérifie si le service est en attente de consentement
             isWaiting = (cookie.indexOf(service.key + '=wait') >= 0),
+
+            // Vérifie si le consentement pour le service a été refusé
             isDenied = (cookie.indexOf(service.key + '=false') >= 0),
+
+            // Vérifie si le consentement a été donné
             isAllowed = ((cookie.indexOf(service.key + '=true') >= 0) || (!service.needConsent && cookie.indexOf(service.key + '=false') < 0)),
+
+            // Vérifie si une réponse (acceptation ou refus) a été donnée
             isResponded = (cookie.indexOf(service.key + '=false') >= 0 || cookie.indexOf(service.key + '=true') >= 0),
+
+            // Vérifie si l'utilisateur a activé "Do Not Track"
             isDNTRequested = (navigator.doNotTrack === "1" || navigator.doNotTrack === "yes" || navigator.msDoNotTrack === "1" || window.doNotTrack === "1"),
+            
+            // Statut actuel du service (autorisé ou refusé) dans la bonne langue (texte)
             currentStatus = (isAllowed) ? tarteaucitron.lang.allowed : tarteaucitron.lang.disallowed,
-            state = (undefined !== service.defaultState) ? service.defaultState :
-                    (undefined !== tarteaucitron.parameters.serviceDefaultState ? tarteaucitron.parameters.serviceDefaultState : 'wait');
 
+            // Statut par défaut
+            state = (undefined !== service.defaultState) ? service.defaultState : // État par défaut du service
+                    (undefined !== tarteaucitron.parameters.serviceDefaultState ? tarteaucitron.parameters.serviceDefaultState : 'wait'); // Sinon, état par défaut global
 
+        // Si le service n'a pas encore été ajouté
         if (tarteaucitron.added[service.key] !== true) {
-            tarteaucitron.added[service.key] = true;
 
+            tarteaucitron.added[service.key] = true; // Marque le service comme ajouté
+
+            // Génère le HTML pour le service
             html += '<li id="' + service.key + 'Line" class="tarteaucitronLine">';
             html += '   <div class="tarteaucitronName">';
             html += '       <span class="tarteaucitronH3" role="heading" aria-level="3">' + service.name + '</span>';
@@ -1137,15 +1182,21 @@ var tarteaucitron = {
             html += '          <span class="tarteaucitronReadmoreSeparator"> - </span>';
             html += '          <span id="tacCL' + service.key + '" class="tarteaucitronListCookies"></span>';
             html += '       </div>';
+
+            // Si l'option "plus d'infos" est activée
             if (tarteaucitron.parameters.moreInfoLink == true) {
 
-                var link = 'https://tarteaucitron.io/service/' + service.key + '/';
-                if (service.readmoreLink !== undefined && service.readmoreLink !== '') {
+                var link = 'https://tarteaucitron.io/service/' + service.key + '/'; // Lien par défaut vers la page d'info du service
+                
+                if (service.readmoreLink !== undefined && service.readmoreLink !== '') { // Lien spécifique au service
                     link = service.readmoreLink;
                 }
-                if (tarteaucitron.parameters.readmoreLink !== undefined && tarteaucitron.parameters.readmoreLink !== '') {
+
+                if (tarteaucitron.parameters.readmoreLink !== undefined && tarteaucitron.parameters.readmoreLink !== '') { // Lien global personnalisé
                     link = tarteaucitron.parameters.readmoreLink;
                 }
+
+                // Ajout du lien vers plus d'infos et vers la source du service
                 html += '       <a href="' + link + '" target="_blank" rel="noreferrer noopener nofollow" title="' + tarteaucitron.lang.more + ' : '+ tarteaucitron.lang.cookieDetail + ' ' + service.name + ' ' + tarteaucitron.lang.ourSite + ' ' + tarteaucitron.lang.newWindow +'" class="tarteaucitronReadmoreInfo">' + tarteaucitron.lang.more + '</a>';
                 html += '       <span class="tarteaucitronReadmoreSeparator"> - </span>';
                 html += '       <a href="' + service.uri + '" target="_blank" rel="noreferrer noopener" title="' + tarteaucitron.lang.source + ' ' + service.name + ' ' + tarteaucitron.lang.newWindow + '" class="tarteaucitronReadmoreOfficial">' + tarteaucitron.lang.source + '</a>';
@@ -1162,78 +1213,122 @@ var tarteaucitron = {
             html += '   </div>';
             html += '</li>';
 
+            // Afficher la section des services si elle est masquée
             tarteaucitron.userInterface.css('tarteaucitronServicesTitle_' + service.type, 'display', 'block');
 
+            // Ajouter le service à la liste affichée
             if (document.getElementById('tarteaucitronServices_' + service.type) !== null) {
                 document.getElementById('tarteaucitronServices_' + service.type).innerHTML += html;
             }
 
+            // Masquer le titre indiquant qu'il n'y a pas de services
             tarteaucitron.userInterface.css('tarteaucitronNoServicesTitle', 'display', 'none');
 
+            // Ordonner les services
             tarteaucitron.userInterface.order(service.type);
 
+            // Ajouter les événements sur les boutons "Autoriser" et "Refuser"
             tarteaucitron.addClickEventToId(service.key + 'Allowed', function () {
-                tarteaucitron.userInterface.respond(this, true);
+                tarteaucitron.userInterface.respond(this, true); // Autoriser le service
             });
 
             tarteaucitron.addClickEventToId(service.key + 'Denied', function () {
-                tarteaucitron.userInterface.respond(this, false);
+                tarteaucitron.userInterface.respond(this, false); // Refuser le service
             });
         }
 
-        // tarteaucitron.pro('!' + service.key + '=' + isAllowed);
-
-        // allow by default for non EU
-        if (isResponded === false && tarteaucitron.user.bypass === true) {
-            isAllowed = true;
-            tarteaucitron.cookie.create(service.key, true);
-        }
-
+        // Gérer l'ajout du service selon les réponses précédentes et les préférences utilisateur
         if ((!isResponded && (isAutostart || (isNavigating && isWaiting)) && !tarteaucitron.highPrivacy) || isAllowed) {
+
             if (!isAllowed || (!service.needConsent && cookie.indexOf(service.key + '=false') < 0)) {
+                // Créer le cookie si le service est autorisé
                 tarteaucitron.cookie.create(service.key, true);
             }
+
             if (tarteaucitron.launch[service.key] !== true) {
+
+                // Marquer le service comme lancé
                 tarteaucitron.launch[service.key] = true;
+
+                // Exécuter le script du service
                 if (typeof tarteaucitronMagic === 'undefined' || tarteaucitronMagic.indexOf("_" + service.key + "_") < 0) { service.js(); }
-                tarteaucitron.sendEvent(service.key + '_loaded');
+                
+                // Envoyer un événement indiquant que le service est chargé
+                tarteaucitron.sendEvent(service.key + '_loaded'); 
             }
+
+            // Marquer le service comme autorisé
             tarteaucitron.state[service.key] = true;
+
+            // Mettre à jour l'interface utilisateur
             tarteaucitron.userInterface.color(service.key, true);
+
         } else if (isDenied) {
+
             if (typeof service.fallback === 'function') {
-                if (typeof tarteaucitronMagic === 'undefined' || tarteaucitronMagic.indexOf("_" + service.key + "_") < 0) { service.fallback(); }
+
+                // Exécuter le fallback si le service est refusé
+                service.fallback();
             }
+
+            // Marquer le service comme refusé
             tarteaucitron.state[service.key] = false;
+
+            // Mettre à jour l'interface utilisateur
             tarteaucitron.userInterface.color(service.key, false);
+
         } else if (!isResponded && isDNTRequested && tarteaucitron.handleBrowserDNTRequest) {
+
+             // Créer un cookie pour refuser le service si DNT est activé
             tarteaucitron.cookie.create(service.key, 'false');
+
             if (typeof service.fallback === 'function') {
-                if (typeof tarteaucitronMagic === 'undefined' || tarteaucitronMagic.indexOf("_" + service.key + "_") < 0) { service.fallback(); }
+
+                // Exécuter le fallback si nécessaire
+                service.fallback();
             }
+
+            // Marquer le service comme refusé
             tarteaucitron.state[service.key] = false;
+
+            // Mettre à jour l'interface utilisateur
             tarteaucitron.userInterface.color(service.key, false);
+
         } else if (!isResponded) {
+
+            // Créer un cookie pour enregistrer l'état du service
             tarteaucitron.cookie.create(service.key, state);
+
             if (typeof tarteaucitronMagic === 'undefined' || tarteaucitronMagic.indexOf("_" + service.key + "_") < 0) {
                 if(true === state && typeof service.js === 'function') {
+
+                    // Exécuter le script du service si autorisé
                     service.js();
+
+                    // Envoyer un événement indiquant que le service est chargé
                     tarteaucitron.sendEvent(service.key + '_loaded');
+
                 } else if (typeof service.fallback === 'function') {
+
+                    // Exécuter le fallback si le service est refusé
                     service.fallback();
                 }
             }
 
+            // Mettre à jour l'interface utilisateur selon l'état du service
             tarteaucitron.userInterface.color(service.key, state);
 
             if( 'wait' === state ) {
+
+                // Ouvrir une alerte si le service est en attente
                 tarteaucitron.userInterface.openAlert();
             }
         }
 
+        // Vérifier le nombre de cookies du service et mise à jour UI
         tarteaucitron.cookie.checkCount(service.key);
-
-        // envoyer un évènement pour avertir de l'ajout d'un service
+        
+        // Envoyer un événement pour signaler que le service a été ajouté
         tarteaucitron.sendEvent(service.key + '_added');
     },
     // fonction pour envoyer un évènement javascript, inutile car >=IE9
@@ -2811,27 +2906,42 @@ var tarteaucitron = {
             }
         }
     },
+    // Fonction qui génère un bloc HTML avec un message et un bouton pour 
+    // permettre à l'utilisateur d'activer un service tiers (utilisée dans la déclaration des services)
     "engage": function (id) {
-        "use strict";
+        "use strict"; 
+
+        // Initialisation de la variable `html` qui contiendra le code HTML généré.
         var html = '',
+
+            // Génère un nombre aléatoire pour créer un identifiant unique pour le bouton.
             r = Math.floor(Math.random() * 100000),
+
+            // Message par défaut, combinant le nom du service et un texte de remplacement (fallback = état désactivé).
             engage = tarteaucitron.services[id].name + ' ' + tarteaucitron.lang.fallback;
 
+        // Si une traduction spécifique pour l'engagement (activation) du service est disponible, on l'utilise.
         if (tarteaucitron.lang['engage-' + id] !== undefined) {
+
+            // Remplace le message par celui spécifique au service s'il est défini dans le fichier de langue.
             engage = tarteaucitron.lang['engage-' + id];
         }
 
-        html += '<div class="tac_activate tac_activate_' + id + '">';
-        html += '   <div class="tac_float">';
-        html += '      ' + engage;
-        html += '      <button type="button" class="tarteaucitronAllow" id="Eng' + r + 'ed' + id + '">';
-        html += '          <span class="tarteaucitronCheck" aria-hidden="true"></span> ' + tarteaucitron.lang.allow;
+        // Construction du bloc HTML qui sera utilisé pour afficher le message d'engagement (activation).
+        html += '<div class="tac_activate tac_activate_' + id + '">'; // Débute un conteneur avec une classe spécifique à l'ID du service.
+        html += '   <div class="tac_float">'; // Sous-conteneur flottant pour le style.
+        html += '      ' + engage; // Ajoute le texte d'engagement (par exemple, "Activer YouTube").
+        
+        // Ajoute un bouton pour permettre à l'utilisateur d'autoriser (activer) le service.
+        html += '      <button type="button" class="tarteaucitronAllow" id="Eng' + r + 'ed' + id + '">'; // Le bouton reçoit un identifiant unique utilisant le nombre aléatoire `r` pour éviter les conflits d'ID.
+        html += '          <span class="tarteaucitronCheck" aria-hidden="true"></span> ' + tarteaucitron.lang.allow; // Ajoute une icône de validation et le texte "Autoriser" (défini dans la langue).
         html += '       </button>';
         html += '   </div>';
-        html += '</div>';
+        html += '</div>'; // Ferme le conteneur.
 
-        return html;
+        return html; // Retourne le code HTML généré qui sera inséré dans le DOM.
     },
+   /* pas utilisé 
     "extend": function (a, b) {
         "use strict";
         var prop;
@@ -2841,6 +2951,7 @@ var tarteaucitron = {
             }
         }
     },
+    */
     // les fonctions pour le chargement du premium, pas utile
     /*"proTemp": '',
     "proTimer": function () {
@@ -2877,6 +2988,7 @@ var tarteaucitron = {
         tarteaucitron.cookie.number();
     },
     */
+   // pas forcément utile dans notre cas
     "AddOrUpdate" : function(source, custom){
         /**
          Utility function to Add or update the fields of obj1 with the ones in obj2
@@ -2918,6 +3030,7 @@ var tarteaucitron = {
             }
         }
     },
+    /* pas utilisé en freemium
     "triggerJobsAfterAjaxCall": function() {
         tarteaucitron.job.forEach(function(e) { tarteaucitron.job.push(e) });
         var i;
@@ -2934,4 +3047,5 @@ var tarteaucitron = {
             });
         }
     }
+        */
 };
