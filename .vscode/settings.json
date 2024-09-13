@@ -1,4 +1,8 @@
 {
     "CodeGPT.apiKey": "OpenAI",
-    "CodeGPT.Autocomplete.provider": "CodeGPT Enterprise - Plus"
+    "CodeGPT.Autocomplete.provider": "CodeGPT Enterprise - Plus",
+    "editor.tokenColorCustomizations": {
+        "comments": "",
+        "textMateRules": []
+    }
 }
