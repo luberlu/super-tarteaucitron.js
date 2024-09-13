@@ -122,41 +122,39 @@ export default class Meringue {
         return new Proxy(target, handler);
     }*/
 
-    // Méthode pour enregistrer des écouteurs d'événements
+    emit(event: string, ...args: any[]) {
+        console.log(`Emitting event: ${event}`, this.listeners);
+        if (this.listeners[event]) {
+            this.listeners[event].forEach(listener => listener(...args));
+        }
+    }
+    
     on(event: string, listener: Function) {
         if (!this.listeners[event]) {
             this.listeners[event] = [];
         }
         this.listeners[event].push(listener);
-        console.log(`Listener added for event: ${event}`, this.listeners); // Log ici
-        console.log(this.listeners);
+        console.log(`Listener added for event: ${event}`, this.listeners);
     }
-
-    // Méthode pour retirer des écouteurs d'événements
+    
     off(event: string, listener: Function) {
         if (!this.listeners[event]) return;
-
-       console.log(`Removing listener for event: ${event}`);
         this.listeners[event] = this.listeners[event].filter(l => l !== listener);
-    }
-
-    // Méthode pour émettre des événements
-    emit(event: string, ...args: any[]) {
-        console.log(`Emitting event: ${event}`, ...args); // Ajoute ce log
-        console.log(this.listeners); // renvoie {}
-        if (this.listeners[event]) {
-            console.log('et ici ??')
-            this.listeners[event].forEach(listener => listener(...args));
-        }
+        console.log(`Listener removed for event: ${event}`, this.listeners);
     }
 
     // Méthode pour modifier une propriété
     setProperty(key: keyof this, value: any) {
+        if (key === 'listeners') {
+            console.warn('Attempt to modify listeners was prevented');
+            return;
+        }
         (this as any)[key] = value;
         this.emit('propertyChange', key, value);
     }
 
     public init() {
+        /*
         if (alreadyLaunch === 0) {
             alreadyLaunch = 1;
             this.load();
@@ -164,8 +162,9 @@ export default class Meringue {
             console.log('content initialisé');
 
             return this;
-        }
+        }*/
 
+        this.load();
         return this;
     }
 

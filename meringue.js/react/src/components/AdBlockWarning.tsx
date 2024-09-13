@@ -8,8 +8,6 @@ export default function AdBlockWarning() {
 
   useEffect(() => {
     const handlePropertyChange = (property: string, value: any) => {
-        console.log('Propriété changée:', property, value);
-
         if (property === 'orientation') {
             setOrientation(value);
         }
@@ -19,11 +17,9 @@ export default function AdBlockWarning() {
         }
     };
 
-    console.log('Ajout de l\'écouteur "propertyChange"');
     meringue.on('propertyChange', handlePropertyChange);
 
     return () => {
-        console.log('Suppression de l\'écouteur "propertyChange"');
         meringue.off('propertyChange', handlePropertyChange);
     };
 }, [meringue]);
