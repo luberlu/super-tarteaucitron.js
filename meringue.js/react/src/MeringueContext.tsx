@@ -20,7 +20,14 @@ interface MeringueProviderProps {
 }
 
 export const MeringueProvider = ({ children }: MeringueProviderProps) => {
-  const meringue = new Meringue({ showAlertSmall: false, privacyUrl: '/privacy' }).init();
+  const meringue = 
+    new Meringue(
+        { 
+            showAlertSmall: false, 
+            privacyUrl: '/privacy' 
+        }
+    ).addJobs('youtube', 'twitch')
+    .init();
 
   return (
     <MeringueContext.Provider value={{ meringue }}>

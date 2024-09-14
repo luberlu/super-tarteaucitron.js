@@ -1,12 +1,12 @@
 import Meringue from "..";
 
 export default {
-    key: "twitch",
+    key: "youtube",
     type: "video",
-    name: "Twitch",
+    name: "Youtube",
     needConsent: true,
     cookies: [],
-    uri: "https://www.twitch.tv/p/en/legal/privacy-notice",
+    uri: "https://www.youtube.com",
     activate: function () {
 
         const evt = new Event("twitch_component_enable");

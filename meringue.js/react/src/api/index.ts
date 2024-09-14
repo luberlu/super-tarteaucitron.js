@@ -1,70 +1,6 @@
 import services from "./services";
-
-declare global {
-    interface Window {
-        meringueForceCDN: string | undefined;
-        meringueUseMin: string | undefined;
-        alreadyLaunch: number | undefined;
-        meringueForceLanguage: string | undefined;
-        meringueForceExpire: string | undefined;
-        meringueCustomText: string | undefined;
-        meringueExpireInDay: boolean | undefined;
-        meringueProLoadServices: any;
-        meringueNoAdBlocker: boolean | undefined;
-        meringueIsLoaded: boolean | undefined;
-    }
-}
-
-interface MeringueParams {
-    adblocker?: boolean; // Vrai ou faux pour activer/désactiver l'adblocker
-    hashtag?: string; // Hashtag à utiliser pour ouvrir le panneau de consentement
-    cookieName?: string; // Nom du cookie utilisé
-    highPrivacy?: boolean; // Activer ou désactiver la haute confidentialité
-    orientation?: 'middle' | 'top' | 'bottom'; // Position de la popup (ici 'middle', 'top' ou 'bottom')
-    bodyPosition?: 'top' | 'bottom'; // Position du corps de la popup
-    removeCredit?: boolean; // Indiquer si on doit enlever le crédit de tarteaucitron.io
-    showAlertSmall?: boolean; // Afficher ou non la petite alerte
-    showDetailsOnClick?: boolean; // Afficher les détails sur clic
-    showIcon?: boolean; // Afficher ou non l'icône de gestion des cookies
-    iconPosition?: 'BottomRight' | 'BottomLeft' | 'TopRight' | 'TopLeft'; // Position de l'icône
-    cookieslist?: boolean; // Afficher ou non la liste des cookies
-    handleBrowserDNTRequest?: boolean; // Gérer la requête Do Not Track du navigateur
-    DenyAllCta?: boolean; // Afficher ou non le bouton "Tout refuser"
-    AcceptAllCta?: boolean; // Afficher ou non le bouton "Tout accepter"
-    moreInfoLink?: boolean; // Lien vers plus d'informations
-    privacyUrl?: string; // URL de la page de politique de confidentialité
-    useExternalCss?: boolean; // Utiliser un CSS externe
-    useExternalJs?: boolean; // Utiliser un JavaScript externe
-    mandatory?: boolean; // Indiquer si certains cookies sont obligatoires
-    mandatoryCta?: boolean; // Afficher l'appel à l'action pour les cookies obligatoires
-    closePopup?: boolean; // Activer ou non la fermeture automatique de la popup
-    groupServices?: boolean; // Grouper les services par catégorie
-    readmoreLink?: string,
-    serviceDefaultState?: 'wait' | 'allow' | 'deny'; // État par défaut des services
-    googleConsentMode?: boolean; // Activer ou non le mode de consentement Google
-    partnersList?: boolean; // Afficher ou non la liste des partenaires
-    alwaysNeedConsent?: boolean; // Toujours demander le consentement pour certains services
-}
-
-let scripts: HTMLCollectionOf<HTMLScriptElement> = document.getElementsByTagName('script');
-let meringuePath: string = (document.currentScript as HTMLScriptElement || scripts[scripts.length - 1]).src.split('?')[0];
-
-let meringueorceCDN: string = (typeof window.meringueForceCDN === 'undefined') ? '' : window.meringueForceCDN;
-let meringueUseMin: string = (typeof window.meringueUseMin === 'undefined') ? '' : window.meringueUseMin;
-let cdn: string | undefined  = (window.meringueForceCDN === '') ? meringuePath.split('/').slice(0, -1).join('/') + '/' : window.meringueForceCDN;
-
-let alreadyLaunch: number = (typeof window.alreadyLaunch === 'undefined') ? 0 : window.alreadyLaunch;
-let meringueForceLanguage: string = (typeof window.meringueForceLanguage === 'undefined') ? '' : window.meringueForceLanguage;
-
-let meringueForceExpire: string = (typeof window.meringueForceExpire === 'undefined') ? '' : window.meringueForceExpire;
-let meringueCustomText: string = (typeof window.meringueCustomText === 'undefined') ? '' : window.meringueCustomText;
-
-let meringueExpireInDay: boolean = (typeof window.meringueExpireInDay === 'undefined' || typeof window.meringueExpireInDay !== "boolean") ? true : window.meringueExpireInDay;
-let timeExpire: number = 31536000000; // Valeur fixe pour l'expiration (1 an en millisecondes)
-
-let meringueNoAdBlocker: boolean = (typeof window.meringueNoAdBlocker === 'undefined') ? false : window.meringueNoAdBlocker;
-let meringueIsLoaded: boolean = (typeof window.meringueIsLoaded === 'undefined') ? false : window.meringueIsLoaded;
-
+import { MeringueParams } from './types';
+import { cdn } from "./config";
 
 export default class Meringue {
     version: number;
@@ -82,15 +18,18 @@ export default class Meringue {
     reloadThePage: boolean;
     language: string;
     isAdBlock: boolean;
+    isLoaded: boolean;
+    job: string[];
 
     private listeners: Record<string, Function[]> = {}; // Stockage des écouteurs
 
     constructor(params: MeringueParams = {}) {
         this.version = 1.19;
-        this.cdn = undefined;
+        this.cdn = cdn;
         this.user = {};
         this.lang = {};
         this.services = {};
+        this.isLoaded = false;
         this.added = [];
         this.idprocessed = [];
         this.categories = [
@@ -103,6 +42,7 @@ export default class Meringue {
         this.reloadThePage = false;
         this.language = 'en';
         this.lang = {};
+        this.job = [];
         this.isAdBlock = false;
         this.parameters = this.setParameters(params);
     }
@@ -215,7 +155,7 @@ export default class Meringue {
     }
 
     private async load() {
-        if (meringueIsLoaded) return;
+        if (this.isLoaded) return;
 
         console.log('Meringue loading...');
         
@@ -226,17 +166,72 @@ export default class Meringue {
         this.sortCategories();
 
         try {
-            await this.addInternalScript(`./meringue.advertising.js0`);
+            await this.testAdBlock();
         } catch (err) {
             console.log('Ad block is enabled or script loading failed:', err);
             this.setProperty('isAdBlock', true); 
         }
 
-        if(!this.isAdBlock){
-           console.log('on est là!')     
+        if(!this.isAdBlock || !this.parameters.adblocker){
+
+            console.log(this.job);
+
+            if (this.job.length > 0) {
+                console.log(services)
+               this.job = this.cleanJobArray(this.job, services);
+
+               console.log(this.job)
+
+                for (index = 0; index < tarteaucitron.job.length; index += 1) {
+
+                    // Ajouter chaque service de la liste des tâches
+                    tarteaucitron.addService(tarteaucitron.job[index]);
+                }
+            }
+
+
         }
 
-        meringueIsLoaded = true;
+        this.isLoaded = true;
+    }
+
+    public addJob(job: string) {
+        this.setProperty('job', [
+            ...this.job,
+            job
+        ])
+
+        return this;
+    }
+
+    public addJobs(...jobs: string[]){
+        this.setProperty('job', [
+            ...this.job,
+            ...jobs
+        ])
+
+        return this;
+    }
+
+    private cleanJobArray(job: string[], services: Record<string, any>): string[] {
+        const seen: Record<string, boolean> = {};
+
+        const uniqueServices = job.filter(item => {
+            if (!seen[item] && services[item] !== undefined) {
+                seen[item] = true;
+                return true;
+            }
+            return false;
+        });
+    
+        return uniqueServices.sort((a, b) => 
+            (services[a].type + services[a].key).localeCompare(services[b].type + services[b].key)
+        );
+    }
+    
+
+    private async testAdBlock() {
+        return await this.addInternalScript(`./meringue.advertising.js`);
     }
 
     private async loadLang() {
@@ -340,7 +335,6 @@ export default class Meringue {
             }
         });
     }
-    
     
     private addInternalScript(
         url: string, 

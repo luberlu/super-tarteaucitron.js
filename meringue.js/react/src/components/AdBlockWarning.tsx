@@ -4,14 +4,9 @@ import { useMeringue } from "../MeringueContext";
 export default function AdBlockWarning() {
   const { meringue } = useMeringue();
   const [show, setShow] = useState(meringue.isAdBlock);
-  const [orientation, setOrientation] = useState(meringue.parameters.orientation);
 
   useEffect(() => {
     const handlePropertyChange = (property: string, value: any) => {
-        if (property === 'orientation') {
-            setOrientation(value);
-        }
-
         if (property === 'isAdBlock') {
             setShow(value);
         }
@@ -24,7 +19,7 @@ export default function AdBlockWarning() {
     };
 }, [meringue]);
 
-  if (!show) return null;
+  if (!show || !meringue.parameters.adblocker) return null;
     
   return (
     <div>
