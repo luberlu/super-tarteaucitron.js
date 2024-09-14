@@ -26,7 +26,7 @@ export const MeringueProvider = ({ children }: MeringueProviderProps) => {
             showAlertSmall: false, 
             privacyUrl: '/privacy' 
         }
-    ).addJobs('youtube', 'twitch')
+    ).addJobs('youtube', 'twitch', 'wouala')
     .init();
 
   return (

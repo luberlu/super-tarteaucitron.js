@@ -1,8 +1,9 @@
 import services from "./services";
 import { MeringueParams } from './types';
 import { cdn } from "./config";
+import { EventEmitter } from "./EventEmitter";
 
-export default class Meringue {
+export default class Meringue extends EventEmitter {
     version: number;
     cdn?: string;
     user: Record<string, any>;
@@ -21,9 +22,9 @@ export default class Meringue {
     isLoaded: boolean;
     job: string[];
 
-    private listeners: Record<string, Function[]> = {}; // Stockage des écouteurs
-
     constructor(params: MeringueParams = {}) {
+        super();
+
         this.version = 1.19;
         this.cdn = cdn;
         this.user = {};
@@ -47,42 +48,40 @@ export default class Meringue {
         this.parameters = this.setParameters(params);
     }
 
-    /*
-    private createProxy(target: any) {
-        const handler = {
-            set: (obj: any, prop: string, value: any) => {
-                obj[prop] = value;
-                console.log(prop, value);
+    private async load() {
+        if (this.isLoaded) return;
 
-                this.emit('propertyChange', prop, value); // Émettre un événement lorsque la propriété change
-                return true;
+        console.log('Meringue loading...');
+        
+        this.language = this.getLanguage();
+        await this.loadLang();
+
+        this.setOrientation();
+        this.sortCategories();
+
+        try {
+            await this.testAdBlock();
+        } catch (err) {
+            console.log('Ad block is enabled or script loading failed:', err);
+            this.setProperty('isAdBlock', true); 
+        }
+
+        if(!this.isAdBlock || !this.parameters.adblocker){
+
+            if (this.job.length > 0) {
+               this.job = this.cleanJobArray(this.job, services);
+
+                this.job.forEach(serviceKey => {
+                    this.addService(serviceKey);
+                });
             }
-        };
-    
-        return new Proxy(target, handler);
-    }*/
+        }
 
-    emit(event: string, ...args: any[]) {
-        if (this.listeners[event]) {
-            this.listeners[event].forEach(listener => listener(...args));
-        }
-    }
-    
-    on(event: string, listener: Function) {
-        if (!this.listeners[event]) {
-            this.listeners[event] = [];
-        }
-        this.listeners[event].push(listener);
-    }
-    
-    off(event: string, listener: Function) {
-        if (!this.listeners[event]) return;
-        this.listeners[event] = this.listeners[event].filter(l => l !== listener);
+        this.isLoaded = true;
     }
 
-    setProperty(key: keyof this, value: any) {
-        (this as any)[key] = value;
-        this.emit('propertyChange', key, value);
+    private addService(key: string){
+        console.log('service added', key)
     }
 
     public init() {
@@ -154,47 +153,6 @@ export default class Meringue {
         }
     }
 
-    private async load() {
-        if (this.isLoaded) return;
-
-        console.log('Meringue loading...');
-        
-        this.language = this.getLanguage();
-        await this.loadLang();
-
-        this.setOrientation();
-        this.sortCategories();
-
-        try {
-            await this.testAdBlock();
-        } catch (err) {
-            console.log('Ad block is enabled or script loading failed:', err);
-            this.setProperty('isAdBlock', true); 
-        }
-
-        if(!this.isAdBlock || !this.parameters.adblocker){
-
-            console.log(this.job);
-
-            if (this.job.length > 0) {
-                console.log(services)
-               this.job = this.cleanJobArray(this.job, services);
-
-               console.log(this.job)
-
-                for (index = 0; index < tarteaucitron.job.length; index += 1) {
-
-                    // Ajouter chaque service de la liste des tâches
-                    tarteaucitron.addService(tarteaucitron.job[index]);
-                }
-            }
-
-
-        }
-
-        this.isLoaded = true;
-    }
-
     public addJob(job: string) {
         this.setProperty('job', [
             ...this.job,
@@ -213,22 +171,35 @@ export default class Meringue {
         return this;
     }
 
-    private cleanJobArray(job: string[], services: Record<string, any>): string[] {
+    // Fonction séparée pour rechercher un service par son 'key' dans un tableau de services
+    private findServiceByKey = (key: string, services: { key: string, type: string }[]) => {
+        return services.find(service => service.key === key);
+    };
+
+    // Fonction pour nettoyer le tableau des jobs
+    private cleanJobArray(job: string[], services: { key: string, type: string }[]): string[] {
         const seen: Record<string, boolean> = {};
 
         const uniqueServices = job.filter(item => {
-            if (!seen[item] && services[item] !== undefined) {
+            const service = this.findServiceByKey(item, services);
+ 
+            if (!seen[item] && service !== undefined) {
                 seen[item] = true;
                 return true;
             }
             return false;
         });
-    
-        return uniqueServices.sort((a, b) => 
-            (services[a].type + services[a].key).localeCompare(services[b].type + services[b].key)
-        );
+
+        return uniqueServices.sort((a, b) => {
+            const serviceA = this.findServiceByKey(a, services);
+            const serviceB = this.findServiceByKey(b, services);
+
+            if (serviceA && serviceB) {
+                return (serviceA.type + serviceA.key).localeCompare(serviceB.type + serviceB.key);
+            }
+            return 0;
+        });
     }
-    
 
     private async testAdBlock() {
         return await this.addInternalScript(`./meringue.advertising.js`);
