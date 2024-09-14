@@ -123,7 +123,6 @@ export default class Meringue {
     }*/
 
     emit(event: string, ...args: any[]) {
-        console.log(`Emitting event: ${event}`, this.listeners);
         if (this.listeners[event]) {
             this.listeners[event].forEach(listener => listener(...args));
         }
@@ -134,21 +133,14 @@ export default class Meringue {
             this.listeners[event] = [];
         }
         this.listeners[event].push(listener);
-        console.log(`Listener added for event: ${event}`, this.listeners);
     }
     
     off(event: string, listener: Function) {
         if (!this.listeners[event]) return;
         this.listeners[event] = this.listeners[event].filter(l => l !== listener);
-        console.log(`Listener removed for event: ${event}`, this.listeners);
     }
 
-    // Méthode pour modifier une propriété
     setProperty(key: keyof this, value: any) {
-        if (key === 'listeners') {
-            console.warn('Attempt to modify listeners was prevented');
-            return;
-        }
         (this as any)[key] = value;
         this.emit('propertyChange', key, value);
     }
@@ -230,25 +222,21 @@ export default class Meringue {
         this.language = this.getLanguage();
         await this.loadLang();
 
-        meringueIsLoaded = true;
-
         this.setOrientation();
         this.sortCategories();
 
-        setTimeout(() => {
-            console.log('Setting isAdBlock to true');
-            this.setProperty('isAdBlock', true); // Utilisation de setProperty pour modifier isAdBlock
-        }, 3000);
-
         try {
-            await this.loadFile(`./meringue.advertising.js`);
-
-            console.log('ici man broooooo');
-
+            await this.addInternalScript(`./meringue.advertising.js0`);
         } catch (err) {
-            console.log('Ad block is enabled.');
-            this.isAdBlock = true;
+            console.log('Ad block is enabled or script loading failed:', err);
+            this.setProperty('isAdBlock', true); 
         }
+
+        if(!this.isAdBlock){
+           console.log('on est là!')     
+        }
+
+        meringueIsLoaded = true;
     }
 
     private async loadLang() {
@@ -299,5 +287,71 @@ export default class Meringue {
         // Retourner la langue par défaut si aucune correspondance
         return defaultLanguage;
     }
+
+    private addScript(
+        url: string, 
+        id?: string, 
+        callback?: () => void, 
+        execute: boolean = true, 
+        attrName?: string, 
+        attrVal?: string, 
+        internal: boolean = true
+    ): Promise<void> {
+        return new Promise((resolve, reject) => {
+            if (execute === false) {
+                if (typeof callback === 'function') {
+                    callback();
+                }
+                resolve();
+            } else {
+                const script = document.createElement('script');
+                let done = false;
+    
+                if (id !== undefined) {
+                    script.id = id;
+                }
+    
+                script.async = true;
+                script.src = url;
+    
+                if (attrName !== undefined && attrVal !== undefined) {
+                    script.setAttribute(attrName, attrVal);
+                }
+    
+                script.onerror = () => {
+                    reject(new Error(`Failed to load script: ${url}`));
+                };
+    
+                script.onload = () => {
+                    if (!done) {
+                        done = true;
+                        if (typeof callback === 'function') {
+                            callback();
+                        }
+                        resolve();
+                    }
+                };
+    
+                if (!this.parameters.useExternalJs || !internal) {
+                    document.getElementsByTagName('head')[0].appendChild(script);
+                } else {
+                    resolve(); // Si on n'ajoute pas le script, on résout la promesse
+                }
+            }
+        });
+    }
+    
+    
+    private addInternalScript(
+        url: string, 
+        id?: string, 
+        callback?: () => void, 
+        execute: boolean = true, 
+        attrName?: string, 
+        attrVal?: string
+    ): Promise<void> {
+        return this.addScript(url, id, callback, execute, attrName, attrVal, true);
+    }
+    
 }
 

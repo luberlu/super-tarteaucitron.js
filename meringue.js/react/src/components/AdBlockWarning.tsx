@@ -29,6 +29,7 @@ export default function AdBlockWarning() {
   return (
     <div>
       <h1>Ad block est activé, veuillez changer vos paramètres</h1>
+      <p>{meringue.lang.adblock_call}</p>
     </div>
   );
 }
