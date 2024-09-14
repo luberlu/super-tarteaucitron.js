@@ -27,4 +27,12 @@ export interface MeringueParams {
     googleConsentMode?: boolean;
     partnersList?: boolean;
     alwaysNeedConsent?: boolean;
+    cookieDomain?: string
+}
+
+export interface Service {
+    key: string,
+    type: string,
+    name: string,
+    needConsent: boolean,
 }

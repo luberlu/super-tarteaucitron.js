@@ -1,7 +1,8 @@
 import services from "./services";
-import { MeringueParams } from './types';
+import { MeringueParams, Service } from './types';
 import { cdn } from "./config";
 import { EventEmitter } from "./EventEmitter";
+import { Cookies } from "./Cookies";
 
 export default class Meringue extends EventEmitter {
     version: number;
@@ -21,6 +22,8 @@ export default class Meringue extends EventEmitter {
     isAdBlock: boolean;
     isLoaded: boolean;
     job: string[];
+    
+    private cookiesManager: Cookies;
 
     constructor(params: MeringueParams = {}) {
         super();
@@ -29,7 +32,7 @@ export default class Meringue extends EventEmitter {
         this.cdn = cdn;
         this.user = {};
         this.lang = {};
-        this.services = {};
+        this.services = services;
         this.isLoaded = false;
         this.added = [];
         this.idprocessed = [];
@@ -46,6 +49,8 @@ export default class Meringue extends EventEmitter {
         this.job = [];
         this.isAdBlock = false;
         this.parameters = this.setParameters(params);
+
+        this.cookiesManager = new Cookies(this.parameters);
     }
 
     private async load() {
@@ -69,7 +74,7 @@ export default class Meringue extends EventEmitter {
         if(!this.isAdBlock || !this.parameters.adblocker){
 
             if (this.job.length > 0) {
-               this.job = this.cleanJobArray(this.job, services);
+               this.job = this.cleanArray(this.job, this.services);
 
                 this.job.forEach(serviceKey => {
                     this.addService(serviceKey);
@@ -80,8 +85,69 @@ export default class Meringue extends EventEmitter {
         this.isLoaded = true;
     }
 
-    private addService(key: string){
-        console.log('service added', key)
+     public allowService(serviceId: string) {
+        console.log('allow man')
+        if (this.services[serviceId]) {
+            this.state[serviceId] = true;
+            this.cookiesManager.create(serviceId, 'true');
+
+            if (typeof this.services[serviceId].js === 'function') {
+                this.services[serviceId].js();
+            }
+
+            this.emit('serviceStatus', serviceId, true); 
+        }
+    }
+
+    public disallowService(serviceId: string) {
+        if (this.services[serviceId]) {
+            this.state[serviceId] = false;
+            this.cookiesManager.create(serviceId, 'false');
+
+            if (typeof this.services[serviceId].fallback === 'function') {
+                this.services[serviceId].fallback();
+            }
+
+            this.emit('serviceStatus', serviceId, false); 
+        }
+    }
+
+    // Fonction pour ajouter des services et notifier via les listeners
+    public addService(serviceId: string) {
+        const service = this.services[serviceId];
+        if (!service) return;
+
+        if (this.parameters.alwaysNeedConsent === true) {
+            service.needConsent = true;
+        }
+
+        // Gérer l'état du service (autorisé/refusé/en attente)
+        const cookie = this.cookiesManager.read();
+
+        const isAllowed = cookie.includes(`${service.key}=true`);
+        const isDenied = cookie.includes(`${service.key}=false`);
+
+        let state = 'wait';
+
+        if (isAllowed) {
+            state = 'true';
+        } else if (isDenied) {
+            state = 'false';
+        }
+
+        // Met à jour l'état du service dans Meringue
+        this.state[service.key] = state === 'true';
+
+        if (this.state[service.key]) {
+            if (typeof service.activate === 'function') service.activate();
+        } else if (isDenied) {
+            if (typeof service.fallback === 'function') service.fallback();
+        }
+
+        this.emit('serviceStatus', serviceId, this.state[service.key]); 
+
+        // Ajouter le service à la liste des tâches
+        // this.job.push(serviceId);
     }
 
     public init() {
@@ -172,34 +238,25 @@ export default class Meringue extends EventEmitter {
     }
 
     // Fonction séparée pour rechercher un service par son 'key' dans un tableau de services
-    private findServiceByKey = (key: string, services: { key: string, type: string }[]) => {
+    private findServiceByKey = (key: string, services: Service[]) => {
         return services.find(service => service.key === key);
     };
 
-    // Fonction pour nettoyer le tableau des jobs
-    private cleanJobArray(job: string[], services: { key: string, type: string }[]): string[] {
-        const seen: Record<string, boolean> = {};
-
-        const uniqueServices = job.filter(item => {
-            const service = this.findServiceByKey(item, services);
- 
-            if (!seen[item] && service !== undefined) {
+    private cleanArray(arr: string[], services: Record<string, any>): string[] {
+        const seen: Record<string, boolean> = {}; // Pour garder trace des éléments déjà vus
+        const uniqueServices = arr.filter(item => {
+            if (!seen[item] && services[item] !== undefined) {
                 seen[item] = true;
                 return true;
             }
             return false;
         });
-
-        return uniqueServices.sort((a, b) => {
-            const serviceA = this.findServiceByKey(a, services);
-            const serviceB = this.findServiceByKey(b, services);
-
-            if (serviceA && serviceB) {
-                return (serviceA.type + serviceA.key).localeCompare(serviceB.type + serviceB.key);
-            }
-            return 0;
-        });
+    
+        return uniqueServices.sort((a, b) => 
+            (services[a].type + services[a].key).localeCompare(services[b].type + services[b].key)
+        );
     }
+    
 
     private async testAdBlock() {
         return await this.addInternalScript(`./meringue.advertising.js`);

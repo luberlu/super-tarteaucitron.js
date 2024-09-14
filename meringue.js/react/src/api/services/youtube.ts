@@ -11,6 +11,8 @@ export default {
 
         const evt = new Event("twitch_component_enable");
         document.dispatchEvent(evt);
+
+        console.log('activation du service twitch.')
 /*
         Meringue
             .fallback(['twitch_player'],
@@ -29,6 +31,9 @@ export default {
     fallback: function () {
         const evt = new Event("twitch_component_disable");
         document.dispatchEvent(evt);
+
+    
+        console.log('désactivation du service twitch.')
         /*
 
         Meringue

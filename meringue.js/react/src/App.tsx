@@ -4,12 +4,14 @@ import viteLogo from '/vite.svg'*/
 import './App.css'
 import { MeringueProvider } from './MeringueContext';
 import AdBlockWarning from './components/AdBlockWarning';
+import Services from './components/Services';
 
 function App() {
   return (
     <>
      <MeringueProvider>
-        <h1>Vite + React</h1>
+        <h1>Meringue.js</h1>
+        <Services />
         <AdBlockWarning />
       </MeringueProvider>
     </>
