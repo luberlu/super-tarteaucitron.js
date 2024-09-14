@@ -1,42 +1,43 @@
 import { useEffect, useState } from 'react';
 import { useMeringue } from '../MeringueContext';
 
+interface ServiceState {
+    [serviceId: string]: any;
+}
+
 export default function Services() {
     const { meringue } = useMeringue();
-    const [serviceState, setServiceState] = useState<{ [key: string]: boolean }>({});
+    const [serviceState, setServiceState] = useState<ServiceState>({});
 
     useEffect(() => {
-        // Gestion de l'ajout de services
-        const handleServiceAdded = (serviceId: string, isAllowed: boolean) => {
+        const handleServiceStatus = (serviceId: string) => {
+            const updatedService = meringue.serviceManager.get(serviceId);
+
+            console.log('updateddd ', updatedService)
+
             setServiceState(prevState => ({
                 ...prevState,
-                [serviceId]: isAllowed
+                [serviceId]: updatedService
             }));
         };
 
-        meringue.on('serviceStatus', handleServiceAdded);
+        meringue.serviceManager.on('serviceUpdate', handleServiceStatus);
 
         return () => {
-            meringue.off('serviceStatus', handleServiceAdded);
+            meringue.serviceManager.off('serviceUpdate', handleServiceStatus);
         };
     }, [meringue]);
 
-    // Fonction pour permettre ou refuser un service
-    const handleServiceAction = (serviceId: string, allow: boolean) => {
-        if (allow) {
-            meringue.allowService(serviceId);  // Méthode pour autoriser un service
-        } else {
-            meringue.disallowService(serviceId);  // Méthode pour refuser un service
-        }
-    };
-
     return (
         <div>
-            {Object.entries(serviceState).map(([serviceId, isAllowed]) => (
+            {Object.entries(serviceState).map(([serviceId, service]) => (
                 <div key={serviceId}>
-                    <span>{serviceId}: {isAllowed ? 'Allowed' : 'Denied'}</span>
-                    <button onClick={() => handleServiceAction(serviceId, true)}>Allow</button>
-                    <button onClick={() => handleServiceAction(serviceId, false)}>Disallow</button>
+                    <h3>{service.name}</h3>
+                    <p>Type: {service.type}</p>
+                    <p>Status: {service.status}</p>
+                    <p>URI: {service.uri}</p>
+                    <button onClick={() => meringue.serviceManager.allow(serviceId)}>Allow</button>
+                    <button onClick={() => meringue.serviceManager.disallow(serviceId)}>Disallow</button>
                 </div>
             ))}
         </div>

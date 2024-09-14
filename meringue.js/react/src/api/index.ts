@@ -3,6 +3,7 @@ import { MeringueParams, Service } from './types';
 import { cdn } from "./config";
 import { EventEmitter } from "./EventEmitter";
 import { Cookies } from "./Cookies";
+import { ServiceManager } from "./ServiceManager";
 
 export default class Meringue extends EventEmitter {
     version: number;
@@ -24,6 +25,7 @@ export default class Meringue extends EventEmitter {
     job: string[];
     
     private cookiesManager: Cookies;
+    public serviceManager: ServiceManager;
 
     constructor(params: MeringueParams = {}) {
         super();
@@ -51,6 +53,7 @@ export default class Meringue extends EventEmitter {
         this.parameters = this.setParameters(params);
 
         this.cookiesManager = new Cookies(this.parameters);
+        this.serviceManager = new ServiceManager(services, this.cookiesManager);
     }
 
     private async load() {
@@ -77,7 +80,7 @@ export default class Meringue extends EventEmitter {
                this.job = this.cleanArray(this.job, this.services);
 
                 this.job.forEach(serviceKey => {
-                    this.addService(serviceKey);
+                    this.serviceManager.add(serviceKey);
                 });
             }
         }
@@ -85,32 +88,6 @@ export default class Meringue extends EventEmitter {
         this.isLoaded = true;
     }
 
-     public allowService(serviceId: string) {
-        console.log('allow man')
-        if (this.services[serviceId]) {
-            this.state[serviceId] = true;
-            this.cookiesManager.create(serviceId, 'true');
-
-            if (typeof this.services[serviceId].js === 'function') {
-                this.services[serviceId].js();
-            }
-
-            this.emit('serviceStatus', serviceId, true); 
-        }
-    }
-
-    public disallowService(serviceId: string) {
-        if (this.services[serviceId]) {
-            this.state[serviceId] = false;
-            this.cookiesManager.create(serviceId, 'false');
-
-            if (typeof this.services[serviceId].fallback === 'function') {
-                this.services[serviceId].fallback();
-            }
-
-            this.emit('serviceStatus', serviceId, false); 
-        }
-    }
 
     // Fonction pour ajouter des services et notifier via les listeners
     public addService(serviceId: string) {
@@ -144,7 +121,7 @@ export default class Meringue extends EventEmitter {
             if (typeof service.fallback === 'function') service.fallback();
         }
 
-        this.emit('serviceStatus', serviceId, this.state[service.key]); 
+        this.emit('serviceUpdate', serviceId); 
 
         // Ajouter le service à la liste des tâches
         // this.job.push(serviceId);

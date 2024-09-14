@@ -7,7 +7,7 @@ export default {
     needConsent: true,
     cookies: [],
     uri: "https://www.youtube.com",
-    activate: function () {
+    js: function () {
 
         const evt = new Event("twitch_component_enable");
         document.dispatchEvent(evt);

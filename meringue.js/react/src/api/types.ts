@@ -31,8 +31,11 @@ export interface MeringueParams {
 }
 
 export interface Service {
-    key: string,
-    type: string,
-    name: string,
-    needConsent: boolean,
+    key: string;
+    name: string;
+    type: string;
+    needConsent: boolean;
+    js?: () => void;
+    fallback?: () => void;
+    status?: 'allowed' | 'denied' | 'wait';
 }
